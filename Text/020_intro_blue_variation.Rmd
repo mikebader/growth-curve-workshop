@@ -1,0 +1,234 @@
+---
+title: "Best Estimates and Errors"
+author: "Mike Bader"
+date: "June 24, 2016"
+output: 
+    html_document:
+        toc: true
+bibliography: /Users/bader/work/Bibs/bib20100831.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this section we will describe a very simple model, one so simple you probably learned it in middle school math: the mean. We all have a very practical sense of calculating means, we take the sum of values across observations and then divide by the number of observations. That helps us in lots of situations, but we rarely stop to think about what the mean, well, *means*. Let's think about that for a second. 
+
+The **mean** gives us our best estimate of the characteristic among a group of observations (if the characteristic follows a normal distribution). With no other information, we have a decent guess of what the height of any person in the room will be based on the mean of the group we study. In fact, we have the estimate that *minimizes* the amount of error among a group of observations. If you think about a scale, the mean sits at the fulcrum where the errors on one size total the errors on the other. That is why it represents the best estimate of data. 
+
+Let's think about the height of people in this room. 
+
+```{r height}
+set.seed(5831209) # This ensures that we get the same results every time
+class.heights <- rnorm(10,65,5)
+class.height.mean <- mean(class.heights)
+class.height.mean
+class.height.sd <- sd(class.heights)
+```
+
+For any one person, we will expect to have some error. But when we add all of the people together, the error will be zero. If, therefore, we pulled one person at a time, the errors on either side would eventually balance out. 
+
+By itself, however, the mean is not particulalry useful. Just knowing that we will -- over the entire sample -- be above or below doesn't give us much knowledge about how much above or how much below we will misestimate someone's height. When we combine the mean with the **standard deviation**, we can really improve our estimate. Now we can attach some level of probability to our estimate. We know that about 68% of people will be within $\pm$ 1 s.d. of the mean, about 95% of people will be within $\pm$ 2 s.d., and 99.7% will be within $\pm$ 3 s.d. 
+
+## Generating Data with a Population with a Known Mean and Standard Deviation
+
+Now we will begin, as I mentioned before, by making up our data. We don't have a particulalry large class, so it's not the best population to work from. But let's assume momentarily that we were randomly sampled from a larger population and we happened to hit the mean and standard deviation perfectly. 
+
+Formally, we will define a process that creates a population of 100 people (i.e., $N=100$) with a mean height of `r round(class.height.mean,2)` and a standard deviation of `r round(class.height.sd,2)`.
+
+### Write the Process & Create the Data
+
+Let's start by indicating what a generic representation of the population based on its mean would look like. It's pretty basic: 
+
+$$x_i = \overline{x} + e_i$$
+
+Again, this is nothing terribly exciting, but it does help us begin to see how models work in the most basic of models.[^notation] On the left side of the equation, we have $x_i$ with "x" standing in for the value we care about (height). Note the subscript $i$ there. That $i$ means that every observation in the data has its own value of $x$. Let's create these first two pieces of our population: 
+
+[^notation]: Another way you might see the model written would be: $x \sim \mathcal{N} (\overline{x},\sigma^2)$, which represents the same model without the equation but includes the distribution of the model without needing to express it in words.
+
+```{r xi}
+N <- 100
+population <- data.frame(i=c(1:N))
+population$x_i <- rnorm(100,mean=class.height.mean,sd=class.height.sd)
+population[1:10,] #Shows only the first ten of 100 observations in the data
+```
+
+The next term in the model, $\overline{x}$, represents the mean height. Notice that *no* subscript exists on that term. That means the mean is the *same for every observation* in the data. We can represent that by adding a variable in our model that represents the mean: 
+
+```{r xbar}
+population$x_bar = mean(population$x_i)
+population[1:10,]
+```
+
+Now we have the final term in the model, $e_i$, representing the "error" of the estimate summarizing reality. In this case the estimate is the mean ($\overline{x}$), the error is the deviation from that estimate. The $i$ indicates that each observation has its own value, which equals the value of the actual height minus the estimate, $x_i - \overline{x}$ (which if you notice, is just a reconfiguration of the equation above). Let's go ahead and calculate that: 
+
+```{r ei}
+population$e_i <- population$x_i - population$x_bar
+population[1:10,]
+```
+
+### Analyze the Data
+
+We have assumed that the heights of people in the population were normally distributed (well, really we constructed them to be so when we used the `rnorm()` command above). To express this, we would say that the errors are distributed with a mean of zero (the definition of the mean) and a standard deviation of $\sigma^2$ (which we also knew ahead of time when we generated the data). Let's see if, in fact, the errors really do sum to zero: 
+
+```{r sum-of-errors}
+sum(population$e_i)
+```
+
+Yay! It's true (the tiny deviation from zero represents machine rounding error). And we can also look at the distribution of the errors to see if they look normal:
+
+```{r distribution-of-errors}
+hist(population$e_i)
+```
+
+Double yay! Now we can also see how we would analyze the variable if we had recorded the data without knowing the model that created the data (i.e., just the $x_i$ column): : 
+
+```{r summarize-results}
+summary(population$x_i)
+```
+
+**Important note:** Note above that I named our dataset `population`; this was intentional because the "error" we are talking about here represents the *deviation from the populaiton mean*. It *does not* represent any type of sampling error, this is just deviation from our single value representing our best guess of that population. When I talk about "error" initially, what I will be talking about is this deviation within the population data. 
+
+Now we have a) described a population process, b) written a model that summarizes that proces, c) created data following that process, and d) analyzed the data following that process. Not bad!
+
+## Generating a Process of Metropolitan House Price Values
+
+Let's move on using the same steps for a new process, which we will use as an example throughout the course today. Let's think about metro-level home values and the median price per square foot of a new home in each metropolitan area. I am going to design a population of 150 metropolitan areas with a mean value of $100 per square foot. But home values, like lots of economic indicators, are not generally normally distributed. Rather, housing prices from the most expensive metropolitan area are generally a multiple higher than the second most, which are a multiple higher than the next. To fix that kind of distribution, we generally think in terms of logarithms. The natural log of 100 equals 4.61, so I will make the mean of our *normally distributed* population of metropolitan areas equal to 4.61. I imagine that a standard deviation of around 0.4 would be appropriate (meaning about 68% of metro median home values per square foot would be within about 40% of the mean). 
+
+### Write the Real Estate Process and Create the Data
+
+I am going to let $x = \ln(\text{price})$ and generate a population of (logged) home value per square foot among metros with the following rule: 
+
+$$x_i = \mu\left(x\right) + \epsilon_i$$
+
+Note that this is the same model that I have above, except that I now use $\mu\left(x\right)$ to represent the mean and $\epsilon_i$ to represent the error, following standard conventions that we use Greek letters to represent parameters. Since I'm making a population, then all of my values will be parameters. 
+
+Let's go ahead and create the data: 
+
+```{r home-value-data}
+N       <- 150
+mu      <- 4.61
+sigma   <- 0.4 
+
+metros <- data.frame(i=c(1:N))
+metros$price_i <- rlnorm(N, meanlog=mu, sdlog=sigma)
+metros$x_i <- log(metros$price_i)
+```
+
+First, we should check to make sure the population looks like it should. Let's check out the price: 
+
+``` {r}
+hist(metros$price_i,breaks=15)
+```
+
+It looks log-normally distributed. Now let's check out the logged value of the price: 
+
+``` {r}
+hist(metros$x_i,breaks=15)
+```
+
+And it looks pretty normally distributed. 
+
+### Analyze the Generated Metropolitan House Price Values
+Let's look really quickly at the first several data lines of the dataset that we generated: 
+
+``` {r}
+metros[c(1:5,146:150),]
+```
+
+We have our original variable and our transformed variable. Let's include the mean (recalling that this value is constant for all observations) and the error (the value minus the mean) into the dataset, and then look at it again: 
+
+```{r fake-metros-mean-error}
+metros$mu <- mean(metros$x_i)
+metros$e_i <- metros$x_i - metros$mu 
+metros[c(1:5,146:150),]
+```
+
+And if we summarize the data, we should get something pretty close to the parameters we specified[^test]: 
+
+[^test]: I wrote this custom function to report the mean and standard deviation that I used below:
+    ```{r summary-function}
+    mean.sd <- function(data,x_i,e_i) {
+        mat <- sapply(data[,c(x_i,e_i)],function(x){round(c(mean(x),sd(x)),3)})
+        rownames(mat) <- c('mean','sd')
+        return(mat)
+    }
+    ```
+
+```{r metro-summary}
+mean.sd(metros,'x_i','e_i')
+```
+Hey, we get what we expected: the mean of $x_i$ equals the logged mean that we entered, the mean of the errors $\overline{e_i}$ equals zero, and the standard deviation of both equals 0.4, just like we entered. 
+
+## Analyze Real House Price Data
+
+What we did above was not terribly exciting. We found the mean and standard deviation of two variables that we knew ahead of time because we *generated* the population. Now let's do something a tad more interesting and look at some real data. 
+
+Zillow releases its [Home Value Index][zhvi] on a monthly basis that describes the median price per square foot of homes in metropolitan areas (they also release data by other geographic boundaries as well, including states). Let's analyze the data for April 2016, the most recent data that they have available. 
+
+[zhvi]: http://www.zillow.com/wikipages/What's-the-Zillow-Home-Value-Index/ (Description of Zillow's home value index)
+
+### Gather the Zillow Home Value Index Median Price per Square Foot Data
+
+The data are online, and we can use the powerful tools that R has to download the data and load it: 
+
+```{r zillow-data}
+## URL for data
+price.sq.ft.url <- 'http://files.zillowstatic.com/research/public/Metro/Metro_MedianValuePerSqft_AllHomes.csv'
+
+## Load data and keep the largest 150 metros (starts at 2 because entire U.S. is
+## listed in first row)
+zillow <- read.csv(price.sq.ft.url,header=TRUE)[2:151,]
+zillow.apr16 <- zillow[,c('RegionID','RegionName','X2016.04')]
+zillow.apr16[c(1:5,146:150),]
+```
+
+Let's look at the distribution of the median prices per square foot: 
+
+``` {r zillow16-descriptives}
+hist(zillow.apr16$X2016.04,breaks=10)
+```
+
+Whoops, doesn't look very normally distributed. Let's see if we can fix that by taking the logarithm of the prices: 
+
+```{r zillow16-log-price}
+zillow.apr16$x_i <- log(zillow.apr16$X2016.04)
+hist(zillow.apr16$x_i,breaks=10)
+```
+
+Ah, that looks better. 
+
+### Analyze & Interpret the Zillow Home Value Index Data for April 2016
+
+Now we can look at our best estimate of the data among the population of data:
+
+```{r zillow16-analysis}
+zillow.apr16$x.bar <- mean(zillow.apr16$x_i)
+zillow.apr16$e_i <- zillow.apr16$x_i - zillow.apr16$x.bar
+mean.sd(zillow.apr16,'x_i','e_i')
+hist(zillow.apr16$e_i,breaks=15)
+```
+
+From these results, we can say that the average median house value per square foot in the largest 150 metro areas in the country is $`r round(exp(mean(zillow.apr16$x_i)),2)` (i.e., $e^{`r round(mean(zillow.apr16$x_i),3)`})$. Metros that fall between $`r round(exp(mean(zillow.apr16$x_i)-sd(zillow.apr16$e_i)),2)` and $`r round(exp(mean(zillow.apr16$x_i)+sd(zillow.apr16$e_i)),2)` are within one standard deviation from the mean, which under perfect normality would equal 68% of thed data.We can check on how our assumptions are violated by calculating what percent of observations end up within one standard deviation of the mean: 
+
+```{r zillow16-sd-check}
+## Count the number of metros for which 
+sd.range <- c(
+    exp(mean(zillow.apr16$x_i)-sd(zillow.apr16$e_i)),
+    exp(mean(zillow.apr16$x_i)+sd(zillow.apr16$e_i))
+    )
+sd.range
+sum(zillow.apr16$X2016.04>=sd.range[1] & zillow.apr16$X2016.04<=sd.range[2]) / 150
+```
+
+And we find that 77% of observations fall within $\pm$ 1 s.d. rather than the $\approx$ 68% we should expect. Error checks (pun intended!) become really important as we move from very simple models such as the mean to the growth mixture models where we will go in a little bit. Basic checks like these can prove enormously helpful. 
+
+
+```{r wrapup, include=FALSE}
+write.csv(
+    zillow.apr16,
+    "/Users/bader/work/Teaching/Workshops/GrowthCurveModeling/GrowthCurveModelingNotebook/Data/zillowApr16.csv")
+```
+
+
+
