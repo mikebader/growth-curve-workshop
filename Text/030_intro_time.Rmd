@@ -223,7 +223,7 @@ The data look roughly linear, acknowledging that some patterns might emerge whic
 Since the data do not appear to be wildly non-linear, let's proceed to analyzing the linear trend. We will go ahead and run a linear model and measure the error based on the coefficients. Let's center our results to be the conditional average (logged) price per square foot over the entire year:
 
 ```{r intro-time-real-lm}
-ny15.trend.model <- lm(lnprice_t ~ I(t-mean(t)), data=ny15.long)
+ny15.trend.model <- lm(lnprice_t ~ I(t-5.5), data=ny15.long)
 summary(ny15.trend.model)
 coef <- ny15.trend.model$coefficients
 ```
@@ -254,7 +254,7 @@ We estimated the standard deviation of the errors to have been `r round(sd(ny15.
 And that's it! We just ran a real model of metropolitan real estate value growth over an entire year. Not too bad!!!
 
 ```{r include=FALSE}
-save(file='../Data/030.Rdata',list=c('metro.12mo','ny15.long','zillow','fake.trend.model','ny15.plt','ny15.trend.model','varnames.2015'))
+#save(file='../Data/030.Rdata',list=c('metro.12mo','ny15.long','zillow','fake.trend.model','ny15.plt','ny15.trend.model','varnames.2015'))
 ```
 
 

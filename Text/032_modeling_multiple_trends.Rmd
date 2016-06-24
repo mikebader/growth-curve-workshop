@@ -3,11 +3,12 @@ title: "Modeling Multiple Trends"
 author: "Mike Bader"
 date: "June 24, 2016"
 output:
-    html_document:
+  html_document:
     toc: yes
-pdf_document:
+    toc_depth: 3
+  pdf_document:
     toc: yes
-toc_depth: 3
+    toc_depth: 3
 bibliography: /Users/bader/work/Bibs/bib20100831.bib
 ---
 ```{r modeling-multiple-setup,include=FALSE}
@@ -18,6 +19,7 @@ theme_set(theme_gray()) # Sets `cowplot` plots back to having default gray backg
 options("scipen"=5)
 options(width=80)
 load('../Data/030.Rdata')
+price.sq.ft.url <- "../Data/Metro_MedianValuePerSqft_AllHomes.csv"
 ```
 
 # Modeling Multiple Trends
@@ -41,7 +43,7 @@ round(ny.metro.12mo,4)
 ```
 
 ### Write Model and Generate Fake Home Value Trend in Second Metro Area
-Now let's generate data for another metropolitan area. Let's generate a fake Washington, D.C. metro. I would guess that homes cost about 85% as much in Washington as they do in New York. That means that our *intercept*, $\beta_0$ in our fake D.C. metro will be 95% lower: 5.10$\times$ 0.95 = 4.845. I also anticipate that housing prices have stagnated in the D.C. area given the long-term consequences of sequestration and Congressional inaction. I anticipate that prices only grew by 0.1% per month. I imagine that prices would be somewhat unstable, so I will set the standard deviation to be larger than the underlying trend, $\sigma=$0.01. That makes our our fake D.C. look like this: 
+Now let's generate data for another metropolitan area. Let's generate a fake Washington, D.C. metro. I would guess that homes cost about 85% as much in Washington as they do in New York. That means that our *intercept*, $\beta_0$ in our fake D.C. metro will be 95% lower: 5.10$\times$ 0.95 = 4.845. I also anticipate that housing prices have stagnated in the D.C. area given the long-term consequences of sequestration and Congressional inaction. I anticipate that prices only grew by 0.1% per month. I imagine that prices would be somewhat unstable, so I will set the standard deviation to be larger than the underlying trend, $\sigma=$ 0.01. That makes our our fake D.C. look like this: 
 
 $$ \ln\left(price_{t}\right) = 4.335 + 0.001\times month_t + \epsilon_t $$
 
@@ -153,12 +155,65 @@ This equation says that the (logged) median home value in a metro in month $t$ e
 
 **Exercise:** I want you to extend the model that you wrote a little bit ago to now include two trends. I want you to simulate the data.
 
+## Real Home Value Trends in New York and Washington Metros
+Now we can extend the example that we had used before to model the trend from New York to look at the real combined trend in home values between New York and Washington in 2015. 
 
+The first thing that we need to do is get the data for both New York and Washington. 
 
+```{r modeling-multiple-nydc-real-data}
+zillow <- read.csv(price.sq.ft.url,header=TRUE)
+varnames.2015 <- paste0("X2015.",sprintf("%02.0f",1:12))
+nydc15 <- zillow[zillow$RegionName %in% c("New York, NY","Washington, DC"),
+             c("RegionID","RegionName",varnames.2015)
+             ]
+nydc15.long <- reshape(nydc15,idvar="RegionID",timevar="t",direction="long",varying=varnames.2015)
+nydc15.long <- mutate(nydc15.long
+                      , t = t -1 
+                      , price_t = X2015
+                      , lnprice_t = log(price_t)
+                      , RegionID = factor(RegionID,labels=c("ny","dc"))
+                      )
+nydc15.long
+```
 
+And since we know what the New York metro data look like, let's take a look at the D.C. data: 
 
-```{r modeling-multiple-nydc-plot}
+```{r modeling-multiple-dc-plot}
+dc.plt <- qplot(t,lnprice_t,data=nydc15.long[nydc15.long$RegionName=="Washington, DC",],colour = I(dc.color))
+dc.plt
+```
+
+Okay, now let's create the separate trend models for New York and D.C.: 
+
+```{r modeling-multiple-nydc-real-separate-lm}
+ny.model <- lm(lnprice_t ~ t,data=nydc15.long[nydc15.long$RegionName=="New York, NY",])
+summary(ny.model)
+ny.coef <- ny.model$coefficients
+
+dc.model <- lm(lnprice_t ~ t,data=nydc15.long[nydc15.long$RegionName=="Washington, DC",])
+summary(dc.model)
+dc.coef <- dc.model$coefficients
+
+nydc.plt <- qplot(t,lnprice_t,data=nydc15.long,color=RegionID) +
+                    scale_x_continuous(breaks=seq(0,11),labels=month.abb,minor_breaks=NULL) +
+                    scale_colour_manual(values=c(ny.color,dc.color)) +
+                    geom_abline(intercept=ny.coef[1],slope=ny.coef[2],colour=ny.color) +
+                    geom_abline(intercept=dc.coef[1],slope=dc.coef[2],colour=dc.color) +
+                    theme(legend.title=element_blank())
+nydc.plt
+```
+
+This time we didn't center time at its midpoint since it makes it a little easier to think about the intercept as the starting value. 
+
+**Exercise:** I want to you to interpret the values of the model and explain what is going on in New York and in D.C. 
+
+```{r modeling-multiple-nydc-real-lm}
+nydc.model <- lm(lnprice_t ~ t, data=nydc15.long)
+nydc.coef <- nydc.model$coefficients
+summary(nydc.model)
+nydc.plt + geom_abline(intercept=nydc.coef[1],slope=nydc.coef[2])
 
 ```
+
 
 

@@ -393,20 +393,20 @@ ny15.plt</code></pre>
 <div id="analyze-new-york-metro-home-value-trend-in-2015" class="section level3">
 <h3>Analyze New York Metro Home Value Trend in 2015</h3>
 <p>Since the data do not appear to be wildly non-linear, let’s proceed to analyzing the linear trend. We will go ahead and run a linear model and measure the error based on the coefficients. Let’s center our results to be the conditional average (logged) price per square foot over the entire year:</p>
-<pre class="r"><code>ny15.trend.model &lt;- lm(lnprice_t ~ I(t-mean(t)), data=ny15.long)
+<pre class="r"><code>ny15.trend.model &lt;- lm(lnprice_t ~ I(t-5.5), data=ny15.long)
 summary(ny15.trend.model)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = lnprice_t ~ I(t - mean(t)), data = ny15.long)
+## lm(formula = lnprice_t ~ I(t - 5.5), data = ny15.long)
 ## 
 ## Residuals:
 ##        Min         1Q     Median         3Q        Max 
 ## -0.0045993 -0.0023326 -0.0004248  0.0018662  0.0060641 
 ## 
 ## Coefficients:
-##                 Estimate Std. Error  t value Pr(&gt;|t|)    
-## (Intercept)    5.4438452  0.0009913 5491.421   &lt;2e-16 ***
-## I(t - mean(t)) 0.0012687  0.0002872    4.418   0.0013 ** 
+##              Estimate Std. Error  t value Pr(&gt;|t|)    
+## (Intercept) 5.4438452  0.0009913 5491.421   &lt;2e-16 ***
+## I(t - 5.5)  0.0012687  0.0002872    4.418   0.0013 ** 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 

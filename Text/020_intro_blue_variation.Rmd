@@ -2,9 +2,11 @@
 title: "Best Estimates and Errors"
 author: "Mike Bader"
 date: "June 24, 2016"
-output: 
-    html_document:
-        toc: true
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
 bibliography: /Users/bader/work/Bibs/bib20100831.bib
 ---
 
@@ -225,9 +227,9 @@ And we find that 77% of observations fall within $\pm$ 1 s.d. rather than the $\
 
 
 ```{r wrapup, include=FALSE}
-write.csv(
-    zillow.apr16,
-    "/Users/bader/work/Teaching/Workshops/GrowthCurveModeling/GrowthCurveModelingNotebook/Data/zillowApr16.csv")
+# write.csv(
+#     zillow.apr16,
+#     "/Users/bader/work/Teaching/Workshops/GrowthCurveModeling/GrowthCurveModelingNotebook/Data/zillowApr16.csv")
 ```
 
 
