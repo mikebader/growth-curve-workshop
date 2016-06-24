@@ -11,7 +11,8 @@ output:
 bibliography: /Users/bader/work/Bibs/bib20100831.bib
 ---
 ```{r setup,include=FALSE}
-zillow.apr16 <- read.csv("https:Data/zillowApr16.csv",header=TRUE)
+if(file.exists('../_init.R')) (source('../_init.R'))
+zillow.apr16 <- read.csv("Data/zillowApr16.csv",header=TRUE)
 ```
 
 ## Moving from Mean to Regression
@@ -25,6 +26,9 @@ We will start by using the same variable that we discussed previously, the media
 $$y_i = \beta_0 + \beta_1 x_i + \epsilon_i$$
 
 This represents the linear regression model where $y_i$ represents our outcome variable, price per square foot. Notice the subscript $i$ there that tells us that each unit (metropolitan area in our case) takes on its own value. We estimate the outcome as a function of the intercept, $\beta_0$, and the slope of a line, $\beta_1$. Notice that neither of these variables includes a subscript, which means that we are indicating that they are the same for all units. The slope of the line predicts the value of $y_i$ given the unit's value of $x_i$. But, just as the mean was our best guess, now the combination of $\beta_0 + \beta_1$ gives us a more sophisticated best guess -- but the actual value between observed $y_i$ and $x_i$ for each unit $i$ will differ. The final term, $\epsilon_i$ represents this difference. 
+
+We call the $\beta_0$ and $\beta_1$ the **intercept** and the **slope**, respectively. The intercept represents the value when $x_i$ equals zero and the line crosses, or intercepts, the $y$-axis. The slope represents the value of the rise over the run and represents the increase in price for each unit change in the $x$ variable. This is likely review, but these terms will become important in a little bit, so I just want to make sure that they are clear. 
+
 
 ### Write Model of Fake Relationship Between Home Price and Population Size
 

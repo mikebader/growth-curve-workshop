@@ -2,7 +2,7 @@
 title: "Growth Curve Modeling Introduction"
 author: "Mike Bader"
 date: "June 24, 2016"
-output: html_document
+output: pdf_document
 bibliography: /Users/bader/work/Bibs/bib20100831.bib
 ---
 

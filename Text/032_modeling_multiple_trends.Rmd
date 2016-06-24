@@ -1,0 +1,164 @@
+---
+title: "Modeling Multiple Trends"
+author: "Mike Bader"
+date: "June 24, 2016"
+output:
+    html_document:
+    toc: yes
+pdf_document:
+    toc: yes
+toc_depth: 3
+bibliography: /Users/bader/work/Bibs/bib20100831.bib
+---
+```{r modeling-multiple-setup,include=FALSE}
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+theme_set(theme_gray()) # Sets `cowplot` plots back to having default gray background
+options("scipen"=5)
+options(width=80)
+load('../Data/030.Rdata')
+```
+
+# Modeling Multiple Trends
+Hopefully at this point, you can see that measuring growth doesn't require anything fancy; it's ultimately just a regression model. That being said, for the types of things that we care about, we often don't want to look at a trend for a single unit. We care about the progresion of a disease among many people. We care about the growth of BMI over time, the propensity to violence, or earnings over a population of people. Or we care about how prices change in metropolitan areas across the country. 
+
+## Variation in Fake Home Value in Two Metro Areas
+Let's start with a really simple example where we have trends across two units that we want to consider. And, to keep consistency, we will generate a process of change in housing prices across two metropolitan areas. Let's keep the model that we had from the last section for our fake New York metro. Let's write out the general model that we used: 
+
+$$ \ln\left(price_t\right) = \beta_0 + \beta_1\left(month_t\right) + \epsilon_t $$
+
+And then for our fake New York metro, we set the following parameters: 
+
+$$ \ln\left(price_{t}\right) = 5.10 + 0.01\times month_t + \epsilon_t $$
+
+Just to remind us, let's look quickly at the data for our fake New York metro (the first line gets rid of the data from our mean-only model): 
+
+```{r modeling-multiple-fake-ny}
+ny.metro.12mo <- metro.12mo[,c(-2:-5,-12:-13)]
+ny.coef <- fake.trend.model$coefficients
+round(ny.metro.12mo,4)
+```
+
+### Write Model and Generate Fake Home Value Trend in Second Metro Area
+Now let's generate data for another metropolitan area. Let's generate a fake Washington, D.C. metro. I would guess that homes cost about 85% as much in Washington as they do in New York. That means that our *intercept*, $\beta_0$ in our fake D.C. metro will be 95% lower: 5.10$\times$ 0.95 = 4.845. I also anticipate that housing prices have stagnated in the D.C. area given the long-term consequences of sequestration and Congressional inaction. I anticipate that prices only grew by 0.1% per month. I imagine that prices would be somewhat unstable, so I will set the standard deviation to be larger than the underlying trend, $\sigma=$0.01. That makes our our fake D.C. look like this: 
+
+$$ \ln\left(price_{t}\right) = 4.335 + 0.001\times month_t + \epsilon_t $$
+
+```{r modeling-multiple-make-dc}
+set.seed(5831209)
+N       <- 12
+beta_0 <- 4.845
+beta_1 <- 0.001
+sigma  <- 0.01
+
+dc.metro.12mo <- data.frame(t=seq(0,N-1)) 
+dc.metro.12mo <- mutate(dc.metro.12mo
+                ,lnprice_t = beta_0 + beta_1*t + rnorm(12,mean=0,sd=sigma)
+                ,price_t = exp(lnprice_t)
+                )
+```
+
+And to look at the data in tabular and graphical formats:
+
+```{r modeling-multiple-dc-data}
+dc.color <- "#e41a1c"
+dc.metro.12mo
+fake.plt <- qplot(t,lnprice_t,data=dc.metro.12mo,colour = I(dc.color))
+fake.plt
+```
+
+### Analyze Fake Trend Data
+Now let's analyze the trend in our fake Washington, D.C. metropolitan area and add the predicted values and errors to our data frame. 
+
+```{r modeling-multiple-dc-lm}
+dc.fake.trend.model <- lm(lnprice_t ~ t,data=dc.metro.12mo)
+summary(dc.fake.trend.model)
+dc.coef <- dc.fake.trend.model$coefficients
+fake.plt + geom_abline(intercept=dc.coef[1],slope=dc.coef[2],color=I(dc.color))
+
+dc.metro.12mo <- mutate(dc.metro.12mo
+                     , beta_0 = dc.coef[1]
+                     , beta_1 = dc.coef[2]
+                     , pred.lnprice_t = beta_0 + beta_1*t
+                     , ehat = lnprice_t - pred.lnprice_t
+                    )
+dc.metro.12mo
+round(c(mean(dc.metro.12mo$ehat),sd(dc.metro.12mo$ehat)),4)
+```
+
+Everything looks in order. Now, for fun, let's plot our fake New York and fake D.C. metro data together on the same plot. In order to do that, we need to combine our two data frames into a single data frame. First, we will create a new variable in each dataset called `i` that will take on the value of `1` for New York and `2` for D.C. Second, we will merge the data together on `i`; obviously none of the data will merge since the datasets don't share a common value of `i`. The result will be a dataframe containing 24 rows: 12 for our fake New York and 12 for our fake D.C. Then we plot both together on the same plot.
+
+```{r modeling-multiple-nydc-merge}
+ny.metro.12mo$i <- 1
+dc.metro.12mo$i <- 2
+merged.metro.12mo <- rbind(ny.metro.12mo,dc.metro.12mo)
+merged.metro.12mo
+
+ny.color <- "#377eb8"
+fake.2metro <- qplot(t,lnprice_t,data=merged.metro.12mo,color=factor(i,labels=c("ny","dc"))) +
+                    scale_x_continuous(breaks=seq(0,11),labels=month.abb,minor_breaks=NULL) +
+                    scale_colour_manual(values=c(ny.color,dc.color)) +
+                    geom_abline(intercept=ny.coef[1],slope=ny.coef[2],colour=ny.color) +
+                    geom_abline(intercept=dc.coef[1],slope=dc.coef[2],colour=dc.color) +
+                    theme(legend.title=element_blank())
+fake.2metro
+```
+
+Now that we have both of these datasets together, we can model the trend *across* the two (fake) cities easily and we add the overall model to the plot:
+
+```{r modeling-multiple-nydc-lm}
+fake.nydc.model <- lm(lnprice_t ~ t, data=merged.metro.12mo)
+nydc.coef <- fake.nydc.model$coefficients
+summary(fake.nydc.model)
+fake.2metro + geom_abline(intercept=nydc.coef[1],slope=nydc.coef[2])
+```
+
+Cool, now we have started to summarize the data across two cities. Let's take a look at the residual plot of the overall model: 
+
+```{r modeling-multiple-nydc-residual}
+merged.metro.12mo$nydc.pred.lnprice_t <- fake.nydc.model$fitted.values
+merged.metro.12mo$nydc.ehat <- fake.nydc.model$residuals
+round(mean(merged.metro.12mo$nydc.ehat,3))
+fake.2metro.r <- qplot(t,nydc.ehat,data=merged.metro.12mo,color=factor(i,labels=c("ny","dc"))) +
+                    scale_x_continuous(breaks=seq(0,11),labels=month.abb,minor_breaks=NULL) +
+                    scale_colour_manual(values=c(ny.color,dc.color)) +
+                    theme(legend.title=element_blank())
+fake.2metro.r
+```
+
+Uh, oh... Now we see a pattern in our residuals, which is exactly what we are *not* supposed to see. Although the overall mean of the residuals equals zero, all of the residuals from our fake New York are positive and all of the residuals from our fake D.C. are negative! That's not good. **This is why we need to think of growth models differently.**
+
+### Write the Model of Growth Across a Population
+This plot shows us that variation in models of growth across a population have two components: they have a distribution of unit-level (in our case metro-level) errors and a distribution of time-level errors. In fact, we now have a (very small) distribution of $\beta_0$s and $\beta_1$s. When we combine the data together, the intercept will equal the mean of the two $\beta_0$ coefficients from our two models and the slope will equal the average of the two $\beta_1$ coefficients. 
+
+What this means is that our $\beta_0$ and $\beta_1$ coefficients can now be represented by their own equations: 
+
+$$ \beta_{0i} = \gamma_{00} + \upsilon_{0i}$$
+$$ \beta_{1i} = \gamma_{10} + \upsilon_{1i}$$
+
+The top equation shows that each metro area, indexed by $i$, has it's own intercept, $\beta_{0i}$ (the value homes in January 2015) that equals the overall intercept across metropolitan areas plus some metro-level unique variation, $\upsilon_{0i}$, away from that overall mean. We generally assume that the distribution of these errors (which we don't have yet because we only have two intercepts) follow a normal distribution that we represent as $\tau_0$. 
+
+The second equation is analogous to the first, exept it describes the variation in the slopes. Each metro area follows its own trend, $\beta_{1i}$, that equals the overall trend, $\gamma_{10}$, and some unique variation off of that trend, $\upsilon_{1i}$. You can see this in the plot of the NY and DC residuals above: because we made the growth rate in D.C. be slower than that of New York, the residuals from the combined model get larger in magnitude in the later months. Once again, we assume (and will later assert) that the slopes are drawn from a normal distribution. 
+
+Let's go back to our original equation for trend analysis and add this new information into the equation: 
+
+$$ \ln\left(price_{ti}\right) = \beta_{0i} + \beta_1\left(month_{t}\right) + \epsilon_{ti} $$
+
+What we did here was indicate that the logged price per square foot depends not on some single intercept and slope, but on the intercept and slope *for the particular metro* i *in which we observe prices at time* t. We can now substitute the equations from above to show how observations of logged price vary: 
+
+$$ \ln\left(price_{ti}\right) = \gamma_{00} + \gamma_{10}\left(month_{t}\right) + \upsilon_{0i} + \upsilon_{1i} + \epsilon_{ti}$$
+
+This equation says that the (logged) median home value in a metro in month $t$ equals the average home price across metros, $\gamma_{00}$ (notice there is no index, so all observations have the same value), plus the average trend across metros, $\gamma_{10}$ (also no index), plus the unique deviation metro $i$'s intercept away from the mean intercept, $\upsilon_{0i}$, and it's unique devation away from the mean slope, $\upsilon_{1i}$, plus the unique deviation of each month's value away from the metro-specific trend line, $\epsilon_{ti}$.
+
+**Exercise:** I want you to extend the model that you wrote a little bit ago to now include two trends. I want you to simulate the data.
+
+
+
+
+
+```{r modeling-multiple-nydc-plot}
+
+```
+
+
