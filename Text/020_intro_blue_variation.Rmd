@@ -1,0 +1,344 @@
+---
+title: "Best Estimates and Errors"
+author: "Mike Bader"
+date: "June 24, 2018"
+output:
+  html_document:
+    toc: yes
+    fig_height: 3.33
+    fig_width: 5
+    fig_caption: yes
+  pdf_document:
+    toc: yes
+    fig_height: 2.67
+    fig_width: 4
+    fig_caption: yes
+bibliography: /Users/bader/work/Bibs/bib20100831.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The Mean as a Model
+-------------------
+
+We will start with a simple model, one so simple you probably learned it in middle school math: the **mean**. 
+
+We all have a practical sense of calculating means by taking the sum of values across units and then dividing that sum by the number of units. We intuit that the mean helps in lots of situations, but we rarely stop to think about what the mean, well, *means*. 
+
+The mean allows us to estimate the value of a characteristic among a group of units. Let's say we were measuring height (characteristic) among a class of 20 students (units). With no other information, we have a decent guess of what the height of any student in the room will be based on the mean of the group we study. The mean allows us to reduce the information from 20 students to a single number. 
+
+Reducing the variation provides us a **model** of heights in the room. A simple model, to be sure, but a model nonetheless. As a summary, the mean allows us to compare our original class of 20 students to another class of 20 students by comparing the means of the two classes rather than the 400 comparisons across the two classrooms. This one number represents our best guess about the height of students in the class, but it cannot predict the height of any one student. In fact, the model might not accurately predict the height of *any* individual student in the class. 
+
+If we randomly call on a student from the class, we will use the mean to guess his or her height. The difference between that student's height and our best guess from the model (the mean), represents the **error** of that student's height from our model of the class. Notice that the *statistical error is a property of the model, not the data*. Using the word "error", however, confuses error in the model with **measurement error**, which *is* a characteristic of the data. For the purpose of this workshop, I will assume that our data contain no measurement error, so that all "error" will describe variation away from the model. For that reason, I will try to refer to differences between the model and any observed value as **deviations** rather than errors. 
+
+The mean as a model has a special significance that tells us what the mean means. The mean represents the value that balances the total amount of deviation above itself (positive deviations) with the total amount of deviation below itself (negative deviations). If you sum the deviations from the mean for a set of values, that sum will equal zero. You cannot have any amount of deviation less than zero. Therefore, the mean's special meaning it represents the *value that minimizes the deviations (errors)*.
+
+We can represent these ideas, using our case of heights among 20 students, in mathematical notation: 
+
+$$Y_i = \mu + \epsilon_i$$
+
+where $Y_i$ represents the height of student $i$, $\mu$ represents the mean height among the 20 students, and $\epsilon_i$ represents the deviation of student $i$'s height from the mean (from what we said before, we also know that the sum of the errors must equal zero, i.e., $\sum\epsilon_i=0$).
+
+### Parts of a Model
+We now have a model that minimizes our statistical error (deviations). Hooray! But, we do not have a sense of *how much* our data deviate from our model. You can probably guess that we use **variance** to assess how much our data deviate from our model. 
+
+Let's say that our classroom contained only fifth graders. Given the different rates of development and natural variation in heights, our model would have a decent amount of deviation (statistical error) when we use it to predict the height of any individual student. The deviations would be even larger, however, if we had a mixed-grade classroom with fourth through sixth graders. To summarize the deviations, we use the variance, which represents the mean squared error (deviation) from the mean. We would be less *confident* that our model (the mean) predicts the outcome for any individual student in the second classroom compared to the first, even though the mean of the two classrooms might be very similar.
+
+We could restate the same idea by saying that the second classroom has more random variation in height than the first classroom. We will call this random variation the **stochastic** component of our model. We will call the part that we use to predict values the model's **deterministic** part.
+
+$$
+\begin{array}{ccccc}
+Y_i &=& \mu& + &\epsilon_i \\
+\text{outcome} & & \text{deterministic} & & \text{stochastic}
+\end{array}
+$$
+
+It's worth noting a few things about notation in this equation. Notice that we index the outcome, $Y$, with the letter $i$. This means that each outcome may take on its own value. The deterministic part of the model, $\mu$, has no index because it represents the model *for the entire population*. We can say, then, that our deterministic part summarizes the population (and eventual a sample from that population when we get to working with samples). Finally, we also index the deviations, $\epsilon_i$, because each unit may have its own unique variation from the mean. 
+
+### Variation of Deviation
+We summarize the amount of variation by calculating the variance, or the the mean of the squared errors (deviations). Mathematically, this gives us our familiar variance equation:
+
+
+$$Var(Y) = \frac{1}{N}\sum\left(Y_i - \mu\right)^2 = \frac{1}{N}\sum\epsilon^2$$
+
+Notice that the *variance summarizes the stochastic component* of the model. Although we typically write the variance as individual values subtracted from the mean, we can also understand that difference as the unique deviation of each unit's value from the mean. 
+
+In order to characterize the model, we need to assume that the errors follow some distribution. In the case of height, we can assume that the deviations follow a normal distribution with a mean of zero (by construction, since the mean represents the value that minimizes the total deviations) and a variance (the mean of the squared deviations). 
+
+In our mathematical representation of our model, we represent this by indicating how we assume the deviations, $\epsilon_i$, are distributed:
+
+$$
+\begin{array}{ccccc}
+{
+\underbrace{\quad \strut Y_i \quad}_{\textstyle\text{outcome}}
+} & = & {
+\underbrace{\quad\strut \mu \quad}_{\textstyle \text{deterministic}}
+} & + & {
+\underbrace{\strut \epsilon_i, \quad \text{ where } \epsilon_i\sim\mathcal{N}(0,\sigma)}_{\textstyle \text{stochastic}}
+}
+\end{array}
+$$
+
+Notice here that the standard deviation, $\sigma$, does not have a subscript because it summarizes the variation in the population.[^stdev] Now we have two numbers that summarize the distribution of all cases in our population, the mean (model), $\mu$, and the standard deviation, $\sigma$, assuming that the deviations away from the model are normally distributed.[^modelrep] 
+
+[^stdev]: The standard deviation is the square root of the variance, $\sigma = \sqrt{Var(Y)}$.
+
+[^modelrep]: For this reason, you will often see models written in the form $Y \sim \mathcal{N}(\mu,\sigma)$, which represents the same model as $Y_i = \mu + \epsilon_i, \epsilon_i \sim \mathcal{N}(0,\sigma)$. 
+
+I hope that you have a better sense of what the mean means. You will come to see that this most basic model, the mean, forms the basis of everything that we will discuss in this workshop. I have found it helpful, when I get confused, to come back to this simple model and try to fit the pieces of more complex models into the framework of this simple model. 
+
+### Review
+1. The mean represents the simplest model of a set of values and it represents the value that minimizes the total error
+2. Deviations from the model (statistical errors) are characteristics of the model, not of the data
+3. We represent the model in three parts:  
+  a. The outcome
+  b. The deterministic part (summary of the whole population)
+  c. The stochastic part (each individual value)
+4. We represent the deviations away from the mean using the variance, and we must assume that the deviations follow some distribution
+
+
+Exercise: Simulating the Mean as a Model
+----------------------------------------
+
+In this exercise, we will:
+
+1. generate two populations 
+2. estimate the mean, variance, and standard deviation of those populations
+3. compare the populations to each other. 
+
+The populations will reflect the two classrooms we described above. The first will contain only fifth graders and the second will have an even mix of fourth, fifth, and sixth graders (we will use a class size of 210 to smooth out large variation due to randomness in small sample sizes and to make the total divisible by three). 
+
+
+```{r mean_model_generate}
+library(ggplot2)
+
+set.seed(5831209)
+
+## Set parameters
+N <- 210 # Classroom size (larger to smooth over random variations)
+mean_4th <- 128; sd_4th <- 6;
+mean_5th <- 139; sd_5th <- 6;
+mean_6th <- 143; sd_6th <- 6;
+
+## Generate (simulate) data
+class_1 <- rnorm(N,mean_5th,sd_5th)
+class_2 <- c(
+            rnorm(N/3,mean_4th,sd_4th),
+            rnorm(N/3,mean_5th,sd_5th),
+            rnorm(N/3,mean_6th,sd_6th)
+            )
+```
+
+The first thing that we did was to set the seed. This allows you to get the same values everytime you run the simulation. Then we set the size of our population, `N`, and the parameters for each of the groups in our data: `mean_4th` represents the height (in cm) of our fourth graders and `sd_4th` represents the standard deviation (and we repeated for fifth and sixth graders). Finally, we randomly generated two classes based on normal distributions following the parameters we just set. The first randomly generates `r N` fifth graders. The second combines (`c()`) `N/3`, or `r N/3`, fourth, fifth, and sixth graders. 
+
+```{r mean_model_estimate}
+## Estimate values from generated data
+mu_1 <- mean(class_1)
+var_1 <- sum((class_1 - mu_1)^2)/N
+sigma_1 <- sqrt(var_1)
+
+mu_2 <- mean(class_2)
+var_2 <- sum((class_2 - mu_2)^2)/N
+sigma_2 <- sqrt(var_2)
+
+## Check that the sum of the errors equals zero
+##   (might have very small number but not exactly equal to zero
+##    due to machine precision, you can fix by using round() function)
+c(
+    sum(class_1-mu_1),
+    sum(class_2-mu_2)
+    )
+```
+
+Above, we calculated the mean, variance, and standard deviation of each classroom. Then, at the bottom, I showed what we already know: the sum of the errors equals zero. 
+
+Now, we will compare the two distributions. First, we will simply compare the summary statistics (what I do in the `list()` function below) and then we will graph the two histograms on top of each other to get a sense of the overlap in the distributions. I rendered the fifth-grade class in red, the mixed-grade class in blue, and the overlapping area of the two distributions shows up in purple. 
+
+```{r mean_model_compare,fig.cap="\\label{fig:classhistogram} Distributions of heights across classes"}
+## Compare distributions of classrooms
+list(class_1=c(mu_1,var_1,sigma_1),class_2=c(mu_2,var_2,sigma_2))
+ggplot() +
+    geom_histogram(aes(x=class_1),fill="red",alpha=.5,bins=15) +
+    geom_histogram(aes(x=class_2),fill="blue",alpha=.5,bins=15) +
+    labs(x="height (in cm)")
+```
+
+We find that the students are, on average, only a little shorter in the mixed-grade classroom (the value represents the weighted average of the fourth, fifth, and sixth grade averages), but that there is much more variation in the mixed-grade classroom compared to the fifth-grade only classroom. The histogram shows this to be the case as well, with the blue histogram covering much more area than the red histogram. 
+
+Fancy Means
+-----------
+My daughters have a book, _Fancy Nancy_ that they enjoy reading. In it, the character, Nancy, uses fancy words rather than ordinary ones and recruits her family to be fancier (sample line: "My favorite color is fuchsia. That's a fancy way of saying purple."). I think of Nancy a lot when I teach because regression in almost all of its various forms is just a fancy way of saying "means". 
+
+Let's recall that a mean represents the value that minimizes the error. As a single number, the mean can be helpful but we can't be terribly confident that we can predict a value well. If, however, we had a way that we could use information that we know about each unit to improve our estimates, then we would reduce the uncertainty in our model. **Regression** offers us this possibility. 
+
+Let's return to the second classroom from the previous section. In it we had an even number of fourth, fifth, and sixth graders. The fourth graders are, on average, shorter than the fifth graders who, on average, are shorter than the six graders. Since we know the grade of each student, we can use that information to improve our predictions about the height of each student. We might want to figure out the height of fourth graders, and then figure out how much taller fifth and sixth graders are compared to fourth graders. In other words, we have our familiar regression equation: 
+
+$$Y_i = \beta_0 + \beta_1\text{fifth}_i + \beta_2\text{sixth}_i + \epsilon_i$$
+
+Let's look at what terms *do not* contain indicies: $\beta_0$, $\beta_1$, and $\beta_2$. Since those terms do not contain indices, they characterize *the population*. The first term, $\beta_0$ represents the mean value of the outcome when all other variables equal zero. In our equation above, that would be the case when a student is in neither fifth or sixth grade (by default, they must then be in fourth grade). Under this scenario, we can rewrite the equation for all students who are neither in fifth nor sixth grade as: 
+
+$$Y_i = \beta_0 + \epsilon_i$$
+
+And, we have...the mean! 
+
+If we wanted to figure out the fifth grade mean, we take the fourth grade mean, $\beta_0$, plus the *difference in mean heights* between the fifth and fourth grade students, which we represent as $\beta_1$. (We would do the same for the difference in average heights between fourth and sixth graders and represent that with $\beta_2$.) Therefore, our mean prediction among fifth graders would be $\beta_0 + \beta_1$. 
+
+What will still be true is that the sum of the errors in the equation will equal zero. By taking the mean value of fifth graders, we minimize the error around the sum $\beta_0 + \beta_1$. We know that, among fifth graders, the total error on both sides of that sum will balance. The predicted value here, rather than just being the mean as it was in the last example, is the mean plus the difference from the mean among the group we study. Or, a fancy mean. 
+
+With what we know now, we can write out the three parts of this model: 
+
+$$
+\begin{array}{ccccc}
+{
+\underbrace{\quad \strut Y_i \quad}_{\textstyle\text{outcome}}
+} & = & {
+\underbrace{\strut \beta_0 + \beta_1\text{fifth}_i + \beta_2\text{sixth}_i}_{\textstyle \text{deterministic}}
+} & + & {
+\underbrace{\strut \epsilon_i, \quad \text{ where } \epsilon_i\sim\mathcal{N}(0,\sigma)}_{\textstyle \text{stochastic}}
+}
+\end{array}
+$$
+
+
+Some people get tripped up because $\beta_1$ and $\beta_2$ are multiplied by terms that *do* have indices. We distinguish here what information we know about the *student* and what we know about the *model*. The term $\beta_1$ accounts for the mean difference among the population of fifth graders compared to the mean difference among the population of fourth graders. It does not, however, account for the individual deviations among different fifth graders. As a result, we describe it as a characteristic of the population.
+
+### Centering
+This all makes good sense, but knowing the average height of fourth graders might not be a very useful measure to us. We might want to know the average height of all students and then know how much the average height of each grade differs from that overall height. We would call this value the **conditional grand mean**: *conditional* because it conditions on grade, and *grand* because it gives us the mean for the entire population. 
+
+Fortunately, this is easy to calculate. Before we do, let's change our notation ever so slightly to refer to the dummy variable for being in fifth and sixth grade as $X_{5th}$ and $X_{6th}$, so we would have: 
+
+$$Y_i = \beta_0 + \beta_1 X_{5th} + \beta_2 X_{6th} + \epsilon_i$$
+
+To calculate the conditional grand mean, we simply subtract the mean value of each independent variable from the value for each unit (student in this case) of our model.[^centering] So we would now have: 
+
+$$Y_i = \beta_0 + \beta_1 (X_{5th}-\overline{X}_{5th}) + \beta_2 (X_{6th}-\overline{X}_{6th}) + \epsilon_i$$
+
+We now interpret $\beta_0$ as the mean height of the class, accounting for the grades each student attends within the class, and we interpret $\beta_1$ and $\beta_2$ as the difference between the average heights of fifth and sixth graders, respectively, from the mean height. 
+
+[^centering]: The variable $X_{5th}$ would take on the value "1" for students who attend fifth grade. If seven out of 21 students attend fifth grade, then the average value of $X_{5th}$ would be .33. 
+
+
+### Review
+1. Regression models are fancy means that account for individual-level variables in the deterministic part of the model
+2. Centering independent variables around their means changes the intercept to represent the conditional grand mean
+
+Exercise: Fancy Means
+---------------------
+We will now use the data we simulated for `class_2` in the last exercise to estimate a model that accounts for what grades different students attend. We will need to assign students to grades, which will be easy because we simulated the data to be in order by grade. We will also use the function `factor()` to tell R that these data are categorical. 
+
+```{r fancy_mean_data_construction}
+## Construct data frame that includes student's grade
+gradelevel <- rep(c(4,5,6),each=N/3)
+gradelevel <- factor(gradelevel)
+df <- data.frame(height=class_2,gradelevel)
+head(df,4) ## Show first four rows of the data frame
+```
+
+Now we can estimate the model using the linear model function, `lm()`, in R: 
+
+```{r fancy_mean_estimate}
+## Estimate model accounting for student grade
+fancy_mean <- lm(height ~ gradelevel,data=df)
+summary(fancy_mean)
+
+B_fourth <- round(coef(fancy_mean)[1],2)
+B_fifth  <- round(coef(fancy_mean)[2],2)
+B_sixth  <- round(coef(fancy_mean)[3],2)
+c(B_fourth,B_fifth,B_sixth)
+
+table(fancy_mean$fitted.values) ## Table of fitted values from deterministic 
+                                ## part of the model
+
+```
+
+The deterministic part of the model shows that the intercept, $\beta_0$, equals `r B_fourth`, which is not far off from what we set the values to be when we generated the data in the `mean_4th` variable (``r mean_4th``). To estimate the average height of fifth graders, we would add $\beta_1$, shown as `gradelevel5` in the results, to the intercept: `r B_fifth` + `r B_fourth` = `r round(sum(coef(fancy_mean)[1:2],2))`. Again, this value comes pretty close to the parameter `mean_5th` we used to generate the data, ``r mean_5th``.
+
+The last command shows the table of fitted values. Notice we have only three values, and they represent the same values we calculated above. Again, because this is the deterministic part of the model and our independent variables can only take on three values, we end up with only three predicted values. 
+
+Now let's take a look at the stochastic part of the model. 
+
+```{r fancy_mean_stochastic}
+## Stochastic part
+e <- df$height - fancy_mean$fitted.values
+c(mean(e),sd(e))
+
+qplot(e,bins=15)
+
+one_sd <- sum(fancy_mean$residuals>=(-sd(e)) & fancy_mean$residuals<=sd(e))
+one_sd / length(fancy_mean$residuals) 
+```
+
+We have a mean error of zero (we minimized the errors) and the standard deviation of the errors equals 6, which is the same value we used to generate each grade's distribution. The histogram shows that the residuals are close to normally distributed. We should have about 68% of the observations within one standard deviation of the mean. The last row calculates the number of residuals within that range and we end up with `r one_sd` students falling within one standard deviation, or `r round(one_sd / length(fancy_mean$residuals),2)`. Looks good! 
+
+
+Exercise: Analyze Recent Home Value Data
+----------------------------------------
+
+Now we will turn to the Zillow data that we will be using throughout the rest of the workshop. We will load the data and look at the characteristics of the mean and standard deviation. 
+
+Zillow releases its [Home Value Index][zhvi] on a monthly basis that describes the median price per square foot of homes in metropolitan areas (they also release data by other geographic boundaries as well, including states). Let's analyze the data for April 2016, the most recent data that they have available. 
+
+[zhvi]: http://www.zillow.com/wikipages/What's-the-Zillow-Home-Value-Index/ (Description of Zillow's home value index)
+
+### Load the Zillow Data
+
+The data are online, and we can use the powerful tools that R has to download the data and load it: 
+
+```{r zillow-data}
+## URL for data
+price.sq.ft.url <- 'http://files.zillowstatic.com/research/public/Metro/Metro_MedianValuePerSqft_AllHomes.csv'
+
+## Load data and keep the largest 150 metros 
+## (starts at 2 because entire U.S. is listed in first row)
+zillow <- read.csv(price.sq.ft.url,header=TRUE)[2:151,]
+
+## Gather data for March of current year
+year <- 2018
+year_var <- paste0('X',year,'.03')
+zillow_march <- zillow[,c('RegionID','RegionName',year_var)]
+zillow_march[c(1:5,146:150),]
+```
+
+Let's look at the distribution of the median prices per square foot: 
+
+``` {r zillow16-descriptives}
+qplot(zillow_march[[year_var]],bins=15)
+```
+
+Whoops, doesn't look very normally distributed. We might want to take the log of the values to see if they might be more normally distributed. 
+
+```{r zillow-transform}
+zillow_march$y_i <- log(zillow_march[[year_var]])
+qplot(zillow_march$y_i,bins=15)
+```
+
+Ah, that looks better. We still have some outliers, but they are not likely to pull the mean as far away from the center of the distribution as the data in the original scale. 
+
+### Analyze & Interpret the Zillow Data
+
+Now we can look at our best estimate of the data among the population of data:
+
+```{r zillow-month-analysis}
+zillow_march$mu <- mean(zillow_march$y_i)
+zillow_march$e_i <- zillow_march$y_i - zillow_march$mu
+mu_sigma <- round(c(mean=mean(zillow_march$y_i),sd=sd(zillow_march$e)),3)
+mu_sigma
+qplot(zillow_march$e_i,bins=15)
+```
+
+From these results, we can say that the average median house value per square foot in the largest 150 metro areas in the country is $`r round(exp(mu_sigma['mean']),2)` (i.e., $e^{`r mu_sigma['mean']`}$). Metros that fall between $`r round(exp(mean(zillow_march$x_i)-sd(zillow_march$e_i)),2)` and $`r round(exp(mean(zillow_march$x_i)+sd(zillow_march$e_i)),2)` are within one standard deviation from the mean, which under perfect normality would equal 68% of thed data.We can check on how our assumptions are violated by calculating what percent of observations end up within one standard deviation of the mean: 
+
+```{r zillow-sd-check}
+## Count the number of metros for which 
+sd.range <- c(
+    exp(mean(zillow_march$y_i)-sd(zillow_march$e_i)),
+    exp(mean(zillow_march$y_i)+sd(zillow_march$e_i))
+    )
+sd.range
+n_in_range <- sum(zillow_march[[year_var]]>=sd.range[1] & zillow_march[[year_var]]<=sd.range[2])
+n_in_range
+```
+
+And we find that `r round(n_in_range/150,2)*100`% of observations fall within $\pm$ 1 s.d. rather than the $\approx$ 68% we should expect. Given the skew of the data, we expected that the data would not fall into a perfectly normal distribution. If we were doing analyses for a publication, we might want to find a different transformation or deal with these outliers. For now, we can live with them. But, this does call to mind the importance of checking your data. Sanity checks become really important as we move from very simple models such as the mean to the growth mixture models where we will go in a little bit. Basic checks like these can prove enormously helpful. 
