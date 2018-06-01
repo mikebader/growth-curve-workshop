@@ -3,15 +3,15 @@ title: "Best Estimates and Errors"
 author: "Mike Bader"
 date: "June 24, 2018"
 output:
-  html_document:
-    toc: yes
-    fig_height: 3.33
-    fig_width: 5
-    fig_caption: yes
   pdf_document:
     toc: yes
     fig_height: 2.67
     fig_width: 4
+    fig_caption: yes
+  html_document:
+    toc: yes
+    fig_height: 3.33
+    fig_width: 5
     fig_caption: yes
 bibliography: /Users/bader/work/Bibs/bib20100831.bib
 ---
@@ -93,9 +93,9 @@ I hope that you have a better sense of what the mean means. You will come to see
 1. The mean represents the simplest model of a set of values and it represents the value that minimizes the total error
 2. Deviations from the model (statistical errors) are characteristics of the model, not of the data
 3. We represent the model in three parts:  
-  a. The outcome
-  b. The deterministic part (summary of the whole population)
-  c. The stochastic part (each individual value)
+    a. The outcome
+    b. The deterministic part (summary of the whole population)
+    c. The stochastic part (each individual value)
 4. We represent the deviations away from the mean using the variance, and we must assume that the deviations follow some distribution
 
 
@@ -328,7 +328,7 @@ mu_sigma
 qplot(zillow_march$e_i,bins=15)
 ```
 
-From these results, we can say that the average median house value per square foot in the largest 150 metro areas in the country is $`r round(exp(mu_sigma['mean']),2)` (i.e., $e^{`r mu_sigma['mean']`}$). Metros that fall between $`r round(exp(mean(zillow_march$x_i)-sd(zillow_march$e_i)),2)` and $`r round(exp(mean(zillow_march$x_i)+sd(zillow_march$e_i)),2)` are within one standard deviation from the mean, which under perfect normality would equal 68% of thed data.We can check on how our assumptions are violated by calculating what percent of observations end up within one standard deviation of the mean: 
+From these results, we can say that the average median house value per square foot in the largest 150 metro areas in the country is $`r round(exp(mu_sigma['mean']),2)` (i.e., $e^{`r mu_sigma['mean']`}$). Metros that fall between $`r round(exp(mean(zillow_march$y_i)-sd(zillow_march$e_i)),2)` and $`r round(exp(mean(zillow_march$y_i)+sd(zillow_march$e_i)),2)` are within one standard deviation from the mean, which under perfect normality would equal 68% of the data. We can check on how our assumptions are violated by calculating what percent of observations end up within one standard deviation of the mean: 
 
 ```{r zillow-sd-check}
 ## Count the number of metros for which 
