@@ -4,7 +4,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("_functions.R")
+source("R/_functions.R")
 library(ggplot2) # This loads a library that makes prettier plots than standard R
 
 ##### ANALYSIS ####
@@ -17,13 +17,16 @@ zillow.long$lnvalue_t <- log(zillow.long$value_t)
 ## (function get.past_year is defined in _functions.R)
 past_year <- get.past_year(zillow.long)
 zillow.long <- zillow.long[zillow.long$month %in% past_year, ]
+zillow.long <- zillow.long[order(zillow.long$SizeRank),]
 
 ## DESCRIBE THE DATA
-d.ana <- zillow.long[grep("New York|Los Angeles",zillow.long$RegionName),]
-d.ana$city <- factor(rep(c("nyc","la"),each=13))
+d.ana <- zillow.long[grep("New York|Philadelphia",zillow.long$RegionName),]
+d.ana$city <- factor(rep(c("nyc","phl"),each=13))
+last_month <- match(tail(d.ana$month.abbr,1),month.abb)
+month_labels <- rep(month.abb,2)[seq(last_month,last_month+12)]
 g.base <- ggplot(d.ana, aes(x=month,y=lnvalue_t,col=city)) +
     geom_point() +
-    scale_x_continuous(breaks=past_year,labels=rep(month.abb,2)[5:17]) +
+    scale_x_continuous(breaks=past_year,labels=month_labels) +
     labs(
         y="Logged home value/sq. ft.",
         x="Month"

@@ -36,28 +36,40 @@ g.samp
 m.ana <- lmer(lnvalue_ti ~ month + (1 + month | RegionID),data=zillow.long)
 summary(m.ana)
 m.ana.fe <- fixef(m.ana)
-m.ana.re <- ranef(m.ana)
+m.ana.re <- ranef(m.ana)$RegionID
+
+test <- m.ana.re[abs(m.ana.re[,1])<.02,]
+zillow.long[zillow.long$RegionID%in%rownames(test),"RegionName"]
 
 ## INTERPRET THE DATA
-g.pred <- ggplot(data=zillow.long,aes(x=month,y=lnvalue_ti,group=RegionID)) +
+g.pred <- geom_abline(intercept=m.ana.fe[1],slope=m.ana.fe[2],
+                      col="orange",size=1.2)
+g.ana <- ggplot(data=zillow.long,aes(x=month,y=lnvalue_ti,group=RegionID)) +
             geom_line() +
-            geom_abline(
-                intercept=m.ana.fe[1],slope=m.ana.fe[2],
-                col="orange",size=1.2
-                ) +
+            g.pred +
             scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[5:17])
-g.pred
+g.ana
 
-## Show slopes from initial value
-## (i.e., examine change without initial differences)
-slopes <- m.ana.fe[2] + m.ana.re[[1]][,2]
-d.ana <- data.frame(RegionName=zillow.long$RegionName,b_1=rep(slopes,each=13),month=rep(c(0:12),150))
-d.ana$pred <- d.ana$b_1*d.ana$month
-g.slopes <- ggplot(d.ana,aes(x=month,y=pred,by=RegionName)) +
-    geom_line() +
-    geom_abline(intercept=0,slope=m.ana.fe[2],color="orange",size=1.5) +
-    scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[5:17]) +
-    labs(
-        y="Change from initial value"
-    )
-g.slopes
+## Record predicted values and total error
+zillow.long$lnvalue_ti_hat <- predict(m.ana,re.form=NA)
+zillow.long$e_tot <- zillow.long$lnvalue_ti - zillow.long$lnvalue_ti_hat ## Total error
+
+## Record stochastic components of the model
+zillow.long$r_0i <- predict(m.ana,re.form=~(1|RegionID),random.only=T)
+zillow.long$r_1i <- rep(m.ana.re[,2],each=13)
+zillow.long$r_1iXt <- predict(m.ana,re.form=~(0+month|RegionID),random.only=T)
+zillow.long$e_ti <- (zillow.long$e_tot - zillow.long$r_0i - zillow.long$r_1iXt)
+
+## EXAMPLE METRO-SPECIFIC TRENDS
+ex.metros <- c(394640,394974,395012)
+zillow.ex.metros <- zillow.long[zillow.long$RegionID%in%ex.metros,]
+g.ex <- ggplot(zillow.ex.metros,
+       aes(x=month,y=lnvalue_ti,color=RegionName)) +
+    geom_line(size=.5,linetype=2) +
+    geom_smooth(method="lm",se=FALSE,size=.75) +
+    g.pred
+g.ex
+ggsave("images/0105_randominterceptsslopes_example.png",
+       plot=g.ex,height=2.5,width=4,units="in")
+
+zillow.ex.metros[zillow.ex.metros$month==0,c("RegionName","r_0i","r_1i")]

@@ -11,7 +11,9 @@ init <- function(wd) {
         stop("Must define working directory path in _init.R",call.=FALSE)
     }
     setwd(wd)
-    dir.create("../data") ## Will print a warning if the directory already exists
+    if(!dir.exists("../data")){
+        dir.create("../data")
+    }
 
     ## GATHER ZILLOW DATA
     data.url <- 'http://files.zillowstatic.com/research/public/Metro/'
@@ -50,7 +52,7 @@ init <- function(wd) {
     zillow.long$year <- rep(years,N)
 
     ## Save long-format Zillow data
-    save(zillow.long,file="../data/zillow_long.RData")
+    save(zillow.long,file="data/zillow_long.RData")
 }
 init(wd)
 

@@ -18,14 +18,13 @@ i <- as.factor(rep(c(1:N),each=T))
 sigma_it <- 0.002
 tau_0i <- 0.10
 
-## CONJURE POPULATION
 beta_1  <- 0.005
 beta_0  <- log(100) + rnorm(N,0,tau_0i)
+
+## CONJURE POPULATION
 beta_0j <- rep(beta_0,each=T)
 lnvalue_it <- beta_0j + beta_1*t + rnorm(N*T,0,sigma_it)
-
 d.sim <- data.frame(i,t,lnvalue_it)
-nrow(d.sim)
 
 g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_it,group=i)) + geom_line()
 g.sim
@@ -34,7 +33,7 @@ g.sim
 m.sim.i <- by(d.sim,i,function(d) lm(lnvalue_it~t,data=d))
 m.sim.i <- data.frame(t(sapply(m.sim.i,coef)))
 names(m.sim.i) <- c("beta_0","beta_1")
-qplot(m.sim.i$beta_0,bins=15)
+qplot(m.sim.i$beta_0,bins=12)
 
 gamma_00 <- mean(m.sim.i$beta_0)
 gamma_01 <- mean(m.sim.i$beta_1)
