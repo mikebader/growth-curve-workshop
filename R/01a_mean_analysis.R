@@ -3,7 +3,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source('_functions.R')
+source('R/_functions.R')
 library(ggplot2)
 
 ## GATHER DATA

@@ -1,9 +1,10 @@
 #### SIMULATION EXAMPLE: MEAN ####
-## Description: This file simulates a dataset and takes the mean of that dataset
+## Description: This file simulates a dataset and takes the mean of
+##              that dataset
 ## Author: Michael Bader
 
 rm(list=ls())
-source("_functions.R")
+source("R/_functions.R")
 library(ggplot2) # This loads a library that makes prettier plots than standard R
 
 ## PREPARE THE POPULATION

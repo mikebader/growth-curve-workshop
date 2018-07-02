@@ -1,6 +1,6 @@
 #### ANALYSIS EXAMPLE: LINEAR TREND ACROSS TWO METROS ####
-## Description: This file analyzes data over past year in NYC and LA
-##              metros and estimates that trend
+## Description: This file analyzes data over past year in NYC and
+##              Philadelphia metros and estimates that trend
 ## Author: Michael Bader
 
 rm(list=ls())

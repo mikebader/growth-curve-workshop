@@ -1,4 +1,4 @@
-#### ANALYSIS EXAMPLE: RANDOM INTERCEPTS ####
+#### ANALYSIS EXAMPLE: RANDOM INTERCEPTS & SLOPES ####
 ## Description: This file analyzes Zillow dataset assuming random intercept
 ##              and random slopes for 150 largest metros
 ## Author: Michael Bader

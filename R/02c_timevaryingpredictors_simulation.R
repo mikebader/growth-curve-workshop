@@ -1,5 +1,15 @@
 #### SIMULATION EXAMPLE: TIME-VARYING PREDICTORS ####
-## Description: This file simulates three different types of time-variant predictors
+## Description: This file simulates three different types of time-varying
+##              predictors to demonstrate the kinds of time-related
+##              changes that can be modeled simulating a class with 32
+##              sessions
+##              Simulation 1: Simulates an intervention that increases
+##                            the level of comprehension after 16 sessions
+##              Simulation 2: Simulates increase in rate of comprehension
+##                            after 16 sessions
+##              Simulation 3: Simulates increases in both the level of
+##                            comprehension and the rate of comprehension
+##                            after 16 sessions
 ## Author: Michael Bader
 
 rm(list=ls())
@@ -24,8 +34,8 @@ g.base <- ggplot(data=df,aes(x=t,y=conf.orig)) +
     geom_point()
 g.base
 
-## Intervention 1: Send code after second day (t=16) &
-##   increases confidence by 2
+## Intervention 1: Intervention after class session 16 (t=16) &
+##   increases  by 2
 df$day2 <- c(rep(FALSE,16),rep(TRUE,T-16))
 gamma_20 <- 2
 df$conf.day2 <- df$conf.orig + gamma_20*df$day2
@@ -38,7 +48,7 @@ df$conf.day2.pred <- predict(m.sim)
 g.adj <- g.base + geom_line(data=df,aes(y=conf.day2.pred),color="red")
 g.adj
 
-## Intervention 2: getting code after second hour (t=8),
+## Intervention 2: Intervention after class session #8,
 ##   increases slope by .25
 df$code <- df$t - 8
 df$code[df$code<0] <- 0
@@ -50,7 +60,7 @@ summary(m.sim)
 
 df$conf.code.pred <- predict(m.sim)
 
-g.defl <- g.adj + geom_line(data=df,aes(y=conf.code.pred), color="#00aa00")
+g.defl <- g.adj + geom_line(data=df,aes(y=conf.code.pred), color="#00aa00") ## Green
 g.defl
 
 ## Intervention 3: getting code adjusted level of confidence
