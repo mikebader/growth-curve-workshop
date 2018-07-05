@@ -2,7 +2,7 @@
 ## Description: This file downloads and creates datasets for use in workshop
 ## Author: Michael Bader
 
-wd <- '' ## Paste the path to the directory 'R' in the quotes
+wd <- '' ## Paste the path to the class directory you downloaded in the quotes
 init <- function(wd) {
     rm(list=ls())
 
