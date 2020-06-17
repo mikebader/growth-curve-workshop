@@ -20,8 +20,8 @@ zillow.long <- zillow.long[zillow.long$month %in% past_year, ]
 zillow.long <- zillow.long[order(zillow.long$SizeRank),]
 
 ## DESCRIBE THE DATA
-d.ana <- zillow.long[grep("New York|Philadelphia",zillow.long$RegionName),]
-d.ana$city <- factor(rep(c("nyc","phl"),each=13))
+d.ana <- zillow.long[grep("New York|Washington",zillow.long$RegionName),]
+d.ana$city <- factor(rep(c("nyc","was"),each=13))
 last_month <- match(tail(d.ana$month.abbr,1),month.abb)
 month_labels <- rep(month.abb,2)[seq(last_month,last_month+12)]
 g.base <- ggplot(d.ana, aes(x=month,y=lnvalue_t,col=city)) +

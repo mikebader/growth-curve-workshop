@@ -14,9 +14,9 @@ load("../data/zillow.RData")
 X.idx <- grep("X",names(zillow))
 names(zillow)[X.idx]<-sub("X","val.",sub("\\.","",names(zillow)[X.idx]))
 
-## Create list of variables to keep data from Jan 2004 - Dec 2009
+## Create list of variables to keep data from Jan 2004 - Dec 2008
 keep_vars <- paste0("val.",unlist(
-                        lapply(c(2004:2009),paste0,sprintf("%02.0f",1:12))
+                        lapply(c(2004:2008),paste0,sprintf("%02.0f",1:12))
                     ))
 
 nyc.boom_bust <- zillow[
@@ -41,7 +41,6 @@ nyc.long$lnvalue_t <- log(nyc.long$value_t)
 ## Describe data
 g.base <- ggplot(nyc.long, aes(x=month,y=lnvalue_t)) +
     geom_point(size=.95) +
-    scale_y_continuous(limits=c(5.3,5.65),breaks=seq(5.3,5.65,.05)) +
     scale_x_continuous(breaks=seq(0,72,12),labels=paste0("Jan ",2004:2010))
 g.base
 

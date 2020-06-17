@@ -6,7 +6,7 @@
 rm(list=ls())
 source("R/_functions.R")
 library(ggplot2)
-current_year <- 2018
+current_year <- 2020
 
 ## GATHER DATA
 ## Relabel variables to indicate that they represent housing values
@@ -17,8 +17,8 @@ names(zillow)[X.idx]<-sub("X","val.",sub("\\.","",names(zillow)[X.idx]))
 ## Create list of variables to keep data from April of past year
 ## to April of current year
 keep_vars <- c(
-                paste0("val.",current_year-1,sprintf("%02.0f",c(4:12))),
-                paste0("val.",current_year,sprintf("%02.0f",c(1:4)))
+                paste0("val.",current_year-1,sprintf("%02.0f",c(3:12))),
+                paste0("val.",current_year,sprintf("%02.0f",c(1:3)))
                 )
 
 nyc <- zillow[zillow$RegionName=="New York, NY",
@@ -54,5 +54,5 @@ nyc.long$e_t <- nyc.long$lnvalue_t - nyc.long$lnvalue_t_hat
 g.pred <- g.base + geom_smooth(method="lm",se=FALSE)
 g.pred
 
-sapply(list(mean=mean(nyc.long$e_t),sd=sd(nyc.long$e_t)),round,4)
+sapply(list(mean=mean(nyc.long$e_t),sd=sd(nyc.long$e_t)),round,5)
 
