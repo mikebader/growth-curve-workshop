@@ -14,15 +14,14 @@ load("../data/zillow.RData")
 X.idx <- grep("X",names(zillow))
 names(zillow)[X.idx]<-sub("X","val.",sub("\\.","",names(zillow)[X.idx]))
 
-## Create list of variables to keep data from April of past year
-## to April of current year
-keep_vars <- c(
-                paste0("val.",current_year-1,sprintf("%02.0f",c(3:12))),
-                paste0("val.",current_year,sprintf("%02.0f",c(1:3)))
-                )
+## Create list of variables to keep data from March of two years ago
+## to March of current year
+keep_vars <- c(1:2,
+    grep(paste0("val.", current_year-2, "03"), names(zillow)):
+    grep(paste0("val.", current_year, "03"), names(zillow))        
+)
 
-nyc <- zillow[zillow$RegionName=="New York, NY",
-                        c("RegionID","RegionName",keep_vars)]
+nyc <- zillow[zillow$RegionName=="New York, NY", keep_vars]
 nyc
 
 ## Uh oh! We need to make the data "long" in order to analyze it
@@ -35,24 +34,25 @@ nyc.long <- reshape(data=nyc,
 )
 nyc.long
 nyc.long$month <- nyc.long$month - 1
-nyc.long$lnvalue_t <- log(nyc.long$value_t)
+nyc.long$y_t <- log(nyc.long$value_t)
 
 ## DESCRIBE DATA
-g.base <- ggplot(nyc.long, aes(x=month,y=lnvalue_t)) +
-        geom_point() +
-        scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[4:16])
-g.base
+time_plt <- ggplot(nyc.long, aes(x=month,y=y_t)) +
+    geom_point() +
+    scale_x_continuous(breaks=seq(0,24,1),labels=rep(month.abb,3)[4:28])
+time_plt
 
 ## ANALYZE DATA
-m.nyc <- lm(lnvalue_t ~ month,data=nyc.long)
+m.nyc <- lm(y_t ~ month,data=nyc.long)
 summary(m.nyc)
+nyc.long$yhat_t <- predict(m.nyc)
 
-nyc.long$lnvalue_t_hat <- predict(m.nyc)
-nyc.long$e_t <- nyc.long$lnvalue_t - nyc.long$lnvalue_t_hat
+nyc.long$e_t <- nyc.long$y_t - nyc.long$yhat_t
 
 ## INTERPRET DATA
-g.pred <- g.base + geom_smooth(method="lm",se=FALSE)
-g.pred
-
+(
+    pred_plt <- time_plt + 
+        geom_line(data=nyc.long, aes(y=yhat_t), color="orange")
+)
 sapply(list(mean=mean(nyc.long$e_t),sd=sd(nyc.long$e_t)),round,5)
 

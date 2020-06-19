@@ -8,26 +8,27 @@ source("../_functions.R")
 library(ggplot2) # This loads a library that makes prettier plots than standard R
 
 ## PLAN POPULATION
-month <- c(0:12)
-b_0 <- log(500)     ## $500/square foot
-b_1 <- 0.03/12      ## 3% annual increase
-sigma = 0.03/48     ## 0.25% fluctuation in given month
+month <- c(0:23)
+beta0 <- log(500)     ## $500/square foot
+beta1 <- 0.03/12      ## 3% annual increase
+sigma = 0.03/48       ## 0.25% fluctuation off of trend in given month
 
 ## CONJURE POPULATION
-price_t <- b_0 + b_1*month + rnorm(13,0,sigma)
+epsilon_t = rnorm(24,0,sigma)
+price_t <- beta0 + beta1*month + epsilon_t
 d.nyc.sim <- data.frame(month,price_t)
 qplot(x=month,y=price_t)
 
 ## ANALYZE POPULATION
 m.nyc.sim <- lm(price_t ~ month)
-m.nyc.sim
-betas <- coef(m.nyc.sim)
+summary(m.nyc.sim)
+betahats <- coef(m.nyc.sim)
 d.nyc.sim$price_t_hat <- predict(m.nyc.sim)
 d.nyc.sim
 ggplot(d.nyc.sim,aes(x=month,y=price_t)) +
     geom_point()+
-    geom_abline(intercept=betas[1],slope=betas[2],color="orange") +
-    scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[5:17]) +
+    geom_abline(intercept=betahats[1],slope=betahats[2],color="orange") +
+    scale_x_continuous(breaks=seq(0,23,1),labels=rep(month.abb,3)[4:27]) +
     labs(
         y="Logged price",
         x="Month"
