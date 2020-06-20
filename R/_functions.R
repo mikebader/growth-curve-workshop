@@ -17,7 +17,7 @@ mean.sd <- function(data,x_i,e_i) {
 ## Convenience function to identify months in the past year
 get.past_year <- function(d) {
     varcol <- d[,'month']
-    c((max(varcol)-12):max(varcol))
+    c((max(varcol)-24):max(varcol))
 }
 
 ## Set seed to ensure reproducibility of simulations

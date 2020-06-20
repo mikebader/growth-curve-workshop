@@ -25,7 +25,7 @@ init <- function(wd) {
     zillow <- read.csv(price.sq.ft.url,header=TRUE)[2:151,]
 
     ## Save Zillow data object
-    save(zillow,file="../data/zillow.RData")
+    save(zillow,file="data/zillow.RData")
 
     #### RESHAPE ZILLOW DATA
     ## Relabel variables to indicate that they represent housing values
