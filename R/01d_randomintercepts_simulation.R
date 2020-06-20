@@ -5,7 +5,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("_functions.R")
+source("R/_functions.R")
 library(ggplot2) # This loads a library that makes prettier plots than standard R
 
 ## PLAN POPULATION
@@ -22,8 +22,8 @@ beta_1  <- 0.005
 beta_0  <- log(100) + rnorm(N,0,tau_0i)
 
 ## CONJURE POPULATION
-beta_0j <- rep(beta_0,each=T)
-lnvalue_it <- beta_0j + beta_1*t + rnorm(N*T,0,sigma_it)
+beta_0i <- rep(beta_0,each=T)
+lnvalue_it <- beta_0i + beta_1*t + rnorm(N*T,0,sigma_it)
 d.sim <- data.frame(i,t,lnvalue_it)
 
 g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_it,group=i)) + geom_line()

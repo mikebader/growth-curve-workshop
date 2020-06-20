@@ -28,7 +28,7 @@ g.ana <- ggplot(data=zillow.long,aes(x=month,y=lnvalue_ti,group=RegionID)) +
     scale_x_continuous(breaks=past_year,labels=month.abbrs)
 g.ana
 
-d.int <- zillow.long[zillow.long$month==head(past_year,1),]
+d.int <- zillow.long[zillow.long$month==0,]
 qplot(d.int[,"lnvalue_ti"],bins=15) +
       labs(
           x=paste0("Logged median home value/sq. ft. in ",
@@ -39,7 +39,6 @@ qplot(d.int[,"lnvalue_ti"],bins=15) +
 ## ANALYZE THE DATA
 m.ana <- lmer(lnvalue_ti ~ month + (1 | RegionID),data=zillow.long)
 summary(m.ana)
-m.ana.fe <- round(fixef(m.ana),4)
 
 ## INTERPRET THE DATA
 g.pred <- g.ana + geom_abline(
