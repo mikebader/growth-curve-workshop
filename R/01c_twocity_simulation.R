@@ -9,60 +9,74 @@ library(ggplot2)
 library(latex2exp)
 
 ## PLAN OUR POPULATION
-month <- c(0:12)
+month <- c(0:23)
 
 # New York
-nyc.b_0 <- log(236)
-nyc.b_1 <- 0.005
-nyc.sigma <- 0.004
+nyc.b_0 <- log(700) ## $700/sqft
+nyc.b_1 <- .03/12   ## 3% annual increase
+nyc.sigma <- .03/48 ## 0.25% fluctuation off of trend in given month 
 
 # Washington
-was.b_0 <- log(225)
-was.b_1 <- 0.005
-was.sigma <- 0.004
+was.b_0 <- log(500) ## $500/sqft
+was.b_1 <- .03/12   ## 3% annual increase
+was.sigma <- .03/48 ## 0.25% fluctuation off of trend in given month 
 
 ## CONJURE OUR POPULATION
-nyc.value_t <- nyc.b_0 + nyc.b_1*month + rnorm(13,0,nyc.sigma)
-d.nyc.sim <- data.frame(month,value_t=nyc.value_t)
+nyc.lnvalue_t <- nyc.b_0 + nyc.b_1*month + rnorm(24,0,nyc.sigma)
+d.nyc.sim <- data.frame(month,lnvalue_t=nyc.lnvalue_t)
 
-was.value_t <- was.b_0 + was.b_1*month + rnorm(13,0,was.sigma)
-d.was.sim <- data.frame(month,value_t=was.value_t)
+was.lnvalue_t <- was.b_0 + was.b_1*month + rnorm(24,0,was.sigma)
+d.was.sim <- data.frame(month,lnvalue_t=was.lnvalue_t)
 
 d.sim <- rbind(d.nyc.sim,d.was.sim)
-d.sim$city <- factor(rep(c("nyc","was"),each=13))
+d.sim$city <- factor(rep(c("nyc","was"),each=24))
 d.sim
-qplot(x=month,y=value_t,col=city,data=d.sim)
+qplot(x=month,y=lnvalue_t,col=city,data=d.sim)
+
+
 
 ## ANALYZE OUR POPULATION
 ## Analyze data by city
-m.nyc.sim <- lm(value_t ~ month, data=d.sim[d.sim$city=="nyc",])
+m.nyc.sim <- lm(lnvalue_t ~ month, data=d.sim[d.sim$city=="nyc",])
 m.nyc.sim
 
-m.was.sim <- lm(value_t ~ month, data=d.sim[d.sim$city=="was",])
+m.was.sim <- lm(lnvalue_t ~ month, data=d.sim[d.sim$city=="was",])
 m.was.sim
 
 i.coefs <- matrix(c(m.was.sim$coefficients,m.nyc.sim$coefficients),ncol=2)
 
-g.base <- ggplot(d.sim,aes(x=month,y=value_t)) +
-    geom_point(aes(col=city)) +
+## Analyze the trend as a single model
+m.both <- lm(lnvalue_t ~ month, data=d.sim)
+
+## Plot total error
+qplot(m.both$residuals, bins=1000)
+d.sim$yhat_t <- predict(m.both)
+d.sim$e_t <- d.sim$lnvalue_t - d.sim$yhat_t
+qplot(d.sim$mboth_e_t[d.sim$city=="was"], bins=20)
+
+time_plt <- ggplot(d.sim,aes(x=month,y=lnvalue_t)) +
+    geom_point(aes(color=city)) +
     geom_abline(slope=mean(i.coefs[2,]),intercept=mean(i.coefs[1,])
                 ,size=1, col="blue") +
-    scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[5:17])
-g.base
-ggsave("images/0103_twocity_single_model.png",plot=g.base,height=2.5,width=4,units="in")
+    scale_x_continuous(breaks=seq(0,24,1),labels=rep(month.abb,3)[4:28])
+time_plt
+ggsave("images/0103_twocity_single_model.png",
+       plot=time_plt, height=2.5, width=4, units="in")
 
 ## Calculate predicted values and errors
-d.sim$value_t_hat <- mean(i.coefs[1,]) + mean(i.coefs[2,])*d.sim$month
-d.sim$e_t <- d.sim$value_t - d.sim$value_t_hat
+d.sim$yhat_t <- mean(i.coefs[1,]) + mean(i.coefs[2,])*d.sim$month
+d.sim$e_t <- d.sim$lnvalue_t - d.sim$yhat_t
 
-report.e <- function(e_t) {sapply(list(mean=sum(e_t),sd=sd(e_t)),round,4)}
+report.e <- function(e_t) {sapply(list(mean=sum(e_t),sd=sd(e_t)),round,5)}
 report.e(d.sim$e_t)
 by(d.sim[,"e_t"],d.sim$city,report.e)
 
 ## DESCRIBE ERROR STRUCTURES
-d.sim$city.value_t_hat <- c(predict(m.nyc.sim),predict(m.was.sim))
-d.sim$city.r_t <- d.sim$city.value_t_hat - d.sim$value_t_hat
-d.sim$city.e_t <- d.sim$value_t - d.sim$city.value_t_hat
+d.sim$yhat_t <- c(predict)
+
+d.sim$city.lnvaluehat_hat <- c(predict(m.nyc.sim), predict(m.was.sim))
+d.sim$city.r_t <- d.sim$city.lnvaluehat_t - d.sim$lnvaluehat_t
+d.sim$city.e_t <- d.sim$lnvalue_t - d.sim$city.lnvaluehat_t
 
 ## Plot error structure
 g.nyc.was <- g.base +
