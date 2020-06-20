@@ -4,14 +4,14 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("../_functions.R")
+source("R/_functions.R")
 library(ggplot2) # This loads a library that makes prettier plots than standard R
 
 ## PLAN POPULATION
 month <- c(0:23)
 beta0 <- log(500)     ## $500/square foot
 beta1 <- 0.03/12      ## 3% annual increase
-sigma = 0.03/48       ## 0.25% fluctuation off of trend in given month
+sigma <- 0.03/48      ## 0.25% fluctuation off of trend in given month
 
 ## CONJURE POPULATION
 epsilon_t = rnorm(24,0,sigma)
@@ -26,7 +26,7 @@ betahats <- coef(m.nyc.sim)
 d.nyc.sim$price_t_hat <- predict(m.nyc.sim)
 d.nyc.sim
 ggplot(d.nyc.sim,aes(x=month,y=price_t)) +
-    geom_point()+
+    geom_point(size=.75)+
     geom_abline(intercept=betahats[1],slope=betahats[2],color="orange") +
     scale_x_continuous(breaks=seq(0,23,1),labels=rep(month.abb,3)[4:27]) +
     labs(
