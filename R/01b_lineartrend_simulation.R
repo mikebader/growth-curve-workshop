@@ -4,7 +4,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("R/_functions.R")
+source("_functions.R")
 library(ggplot2) # This loads a library that makes prettier plots than standard R
 
 ## PLAN POPULATION

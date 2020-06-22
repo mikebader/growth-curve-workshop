@@ -5,7 +5,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("R/_functions.R")
+source("_functions.R")
 library(ggplot2)
 
 ## GATHER DATA

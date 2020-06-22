@@ -11,7 +11,7 @@ library(ggplot2) # This loads a library that makes prettier plots than standard 
 ## PLAN POPULATION
 month <- c(0:12)
 N <- 150
-T <- length(month)
+N_t <- length(month)
 t <- rep(month,N)
 i <- as.factor(rep(c(1:N),each=T))
 
@@ -22,7 +22,7 @@ beta_1  <- 0.005
 beta_0  <- log(100) + rnorm(N,0,tau_0i)
 
 ## CONJURE POPULATION
-beta_0i <- rep(beta_0,each=T)
+beta_0i <- rep(beta_0,each=N_t)
 lnvalue_it <- beta_0i + beta_1*t + rnorm(N*T,0,sigma_it)
 d.sim <- data.frame(i,t,lnvalue_it)
 
