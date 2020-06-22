@@ -4,7 +4,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("R/_functions.R")
+source("_functions.R")
 library(ggplot2)
 library(lme4)
 
@@ -42,18 +42,20 @@ summary(m.ana)
 
 ## INTERPRET THE DATA
 g.pred <- g.ana + geom_abline(
-    intercept=m.ana.fe[["(Intercept)"]],
-    slope=m.ana.fe[["month"]],
+    intercept=m.ana@beta[1],
+    slope=m.ana@beta[2],
     col="orange",size=1.2
 )
 g.pred
 
 
 ## Ignore Below (used for writing values to my lecture notes)
-f <- file("lecture/_0103-analysis-estimates.tex")
+m.ana.fe <- m.ana@beta
+f <- file("../lecture/_0103-analysis-estimates.tex")
 writeLines(c(
     paste0("\\newcommand{\\intercept}{",round(m.ana.fe[1],3),"}"),
-    paste0("\\newcommand{\\slope}{",m.ana.fe[2],"}"),
+    paste0("\\newcommand{\\interceptexp}{", round(exp(m.ana.fe[1])), "}"),
+    paste0("\\newcommand{\\slope}{",round(m.ana.fe[2],4),"}"),
     paste0("\\newcommand{\\varlevone}{",round(summary(m.ana)$sigma,3),"}"),
     paste0("\\newcommand{\\varlevtwo}{",round(summary(m.ana)$varcor$RegionID[1],3),"}")
     ),f)
