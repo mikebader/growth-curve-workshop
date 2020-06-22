@@ -4,7 +4,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("R/_functions.R")
+source("_functions.R")
 library(ggplot2)
 library(latex2exp)
 
@@ -14,12 +14,12 @@ month <- c(0:23)
 # New York
 nyc.b_0 <- log(700) ## $700/sqft
 nyc.b_1 <- .03/12   ## 3% annual increase
-nyc.sigma <- .03/48 ## 0.25% fluctuation off of trend in given month 
+nyc.sigma <- .005 ## 0.5% fluctuation off of trend in given month 
 
 # Washington
 was.b_0 <- log(500) ## $500/sqft
 was.b_1 <- .03/12   ## 3% annual increase
-was.sigma <- .03/48 ## 0.25% fluctuation off of trend in given month 
+was.sigma <- .005 ## 0.5% fluctuation off of trend in given month 
 
 ## CONJURE OUR POPULATION
 nyc.lnvalue_t <- nyc.b_0 + nyc.b_1*month + rnorm(24,0,nyc.sigma)
@@ -60,7 +60,7 @@ time_plt <- ggplot(d.sim,aes(x=month,y=lnvalue_t)) +
                 ,size=1, col="blue") +
     scale_x_continuous(breaks=seq(0,24,1),labels=rep(month.abb,3)[4:28])
 time_plt
-ggsave("images/0103_twocity_single_model.png",
+ggsave("../images/0103_twocity_single_model.png",
        plot=time_plt, height=2.5, width=4, units="in")
 
 ## Calculate predicted values and errors
@@ -72,62 +72,60 @@ report.e(d.sim$e_t)
 by(d.sim[,"e_t"],d.sim$city,report.e)
 
 ## DESCRIBE ERROR STRUCTURES
-d.sim$yhat_t <- c(predict)
-
-d.sim$city.lnvaluehat_hat <- c(predict(m.nyc.sim), predict(m.was.sim))
-d.sim$city.r_t <- d.sim$city.lnvaluehat_t - d.sim$lnvaluehat_t
-d.sim$city.e_t <- d.sim$lnvalue_t - d.sim$city.lnvaluehat_t
+d.sim$city.yhat_t <- c(predict(m.nyc.sim), predict(m.was.sim))
+d.sim$city.r_t <- d.sim$city.yhat_t - d.sim$yhat_t
+d.sim$city.e_t <- d.sim$lnvalue_t - d.sim$city.yhat_t
 
 ## Plot error structure
-g.nyc.was <- g.base +
+g.nyc.was <- time_plt +
     geom_smooth(method="lm",se=FALSE) +
     geom_smooth(aes(col=city),method="lm",se=FALSE,size=.5)
 
 ## Example for single point
 d.sim.was <- d.sim[d.sim$city=="was",]
-was.dec <- d.sim[d.sim$city=="was",][8,]
+was.dec <- d.sim[d.sim$city=="was",][10,]
 was.dec
 
 ## Plot of city error
 g.city_e <- g.nyc.was +
-    geom_segment(x=7,xend=7,
-                 y=was.dec$value_t_hat,yend=was.dec$city.value_t_hat,
-                 col="blue",linetype=2
-    ) +
-    geom_text(x=7.2,y=(was.dec$value_t_hat+was.dec$city.value_t_hat)/2,
+    geom_segment(x=9,xend=9,
+                 y=was.dec$yhat_t,yend=was.dec$city.yhat_t,
+                 col="darkgreen",linetype=1, size=.1) +
+    geom_text(x=9.2,y=(was.dec$yhat_t+was.dec$city.yhat_t)/2,
              label=paste(round(was.dec$city.r_t,4),"(r_0)"),
-             hjust="outward",col="blue"
-             )
+             hjust="left",col="darkgreen"
+             ) +
+    ylim(6.2, 6.45)
 g.city_e
 
 ## Adding plot of error for the month
 g.month_e <- g.city_e +
-    geom_segment(x=7,xend=7,
-                 y=was.dec$city.value_t_hat,yend=was.dec$value_t,
-                 col="#F8766D",linetype=2) +
-    geom_text(x=7.2,y=(was.dec$city.value_t_hat+was.dec$value_t)/2,
+    geom_segment(x=9,xend=9,
+                 y=was.dec$city.yhat_t,yend=was.dec$lnvalue_t,
+                 col="#F8766D",linetype=1, size=.1) +
+    geom_text(x=9.2,y=(was.dec$city.yhat_t+was.dec$lnvalue_t)/2,
               label=paste(round(was.dec$city.e_t,4),"(e)"),
-              hjust="outward",col="#F8766D")
+              hjust="left",col="#F8766D")
 g.month_e
 
 ## Adding the total error to the plot
 g.tot_e <- g.month_e +
-    geom_text(x=7.2,y=was.dec$value_t,
+    geom_text(x=9.2,y=was.dec$lnvalue_t-.005,
               label=paste(round(was.dec$e_t,4),"(total error)"),
-              hjust="outward",vjust="outward",col="black")
+              hjust="left",vjust="outward",col="darkgray")
 g.tot_e
-ggsave("images/0103_twocity_error_decomposition.png",plot=g.tot_e,height=2.5,width=4,units="in")
+ggsave("../images/0103_twocity_error_decomposition.png",plot=g.tot_e,height=2.5,width=4,units="in")
 
 ## Show city-specific error for each of Philly's observations
 g.city_e.all <- g.nyc.was +
     geom_segment(x=d.sim.was$month,xend=d.sim.was$month,
-                 y=d.sim.was$value_t_hat,yend=d.sim.was$city.value_t_hat,data=d.sim.was,
-                 col="blue",linetype=2
+                 y=d.sim.was$yhat_t,yend=d.sim.was$city.yhat_t,data=d.sim.was,
+                 col="darkgreen",linetype=1,size=.5
     ) +
-    geom_text(data=d.sim.was,
-              aes(x=I(month + .2),y=(d.sim.was$value_t_hat+d.sim.was$city.value_t_hat)/2),
-              label=round(d.sim.was$city.r_t,2),
-              hjust="right",col="blue"
+    geom_text(data=d.sim.was[seq(0,23,2),],
+              aes(x=I(month + .2),y=I((yhat_t+city.yhat_t)/2)),
+              label=round(d.sim.was[seq(0,23,2),"city.r_t"],2),
+              hjust="left",col="darkgreen"
     )
 g.city_e.all
 
@@ -135,7 +133,7 @@ g.city_e.all
 
 
 ## Analyze the data as a single dataset
-m.sim <- lm(value_t ~ month,data=d.sim)
+m.sim <- lm(lnvalue_t ~ month,data=d.sim)
 summary(m.sim)
 m.sim.coef <- m.sim$coefficients
 
