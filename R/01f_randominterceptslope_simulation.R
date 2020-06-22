@@ -5,7 +5,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source('R/_functions.R')
+source('_functions.R')
 library(lme4)
 library(ggplot2)
 library(MASS)
@@ -24,11 +24,11 @@ sigma_ti <- 0.002
 tau_00   <- 0.10^2  ## Note that t_00, tau_11, and t_01 represent
 tau_11   <- 0.005^2  ## *variances/covariances* not standard deviations
 tau_01   <- 0
-varcov   <- matrix(c(tau_00,tau_01,tau_01,tau_11),nrow=2)
+Tau   <- matrix(c(tau_00,tau_01,tau_01,tau_11),nrow=2) 
 
 ## CONJURE THE POPULATION
 ## Set metropolitan area characteristics
-tau <- mvrnorm(N,c(0,0),varcov)
+tau <- mvrnorm(N,c(0,0),Tau)
 var(tau)
 beta_0i <- gamma_00 + tau[,1]
 beta_1i <- gamma_10 + tau[,2]
@@ -51,10 +51,10 @@ g.samp
 ## Estimate multilevel model
 m.sim <- lmer(lnvalue_ti ~ t + (1 + t|i),data=d.sim)
 summary(m.sim)
-m.sim.fe <- fixef(m.sim)
-m.sim.re <- ranef(m.sim)$i
+m.sim.fe <- fixef(m.sim)     ## Deterministic
+m.sim.re <- ranef(m.sim)$i   ## Stochastic
 var(m.sim.re)
-cbind(var(m.sim.re), var(tau))  ## Compare to `varcov` above
+cbind(var(m.sim.re), var(tau))  ## Compare to `Tau` above
 
 g.pred <- geom_abline(intercept=m.sim.fe[1],slope=m.sim.fe[2],
                       color="orange",size=1.5)
