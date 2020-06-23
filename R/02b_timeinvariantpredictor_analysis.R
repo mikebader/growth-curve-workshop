@@ -3,10 +3,11 @@
 ##              and random slopes for 150 largest metros with Census region
 ##              used to refine estimates of intercepts and slopes
 ## Author: Michael Bader
-library(ggplot2)
-library(lme4)
 
 rm(list=ls())
+source('_functions.R')
+library(ggplot2)
+library(lme4)
 
 ## GATHER DATA
 ## Download and format Zillow's crosswalk dataset
@@ -17,7 +18,7 @@ names(xwlk) <- c("ZillowName","RegionID","Geo_CBSA")
 
 ## Download Census 2010 data (that includes geographic identifiers
 ## and total population)
-census2010 <- read.delim("data/R11740339_SL320.txt",encoding="UTF-8")
+census2010 <- read.delim("../data/R11740339_SL320.txt",encoding="UTF-8")
 census2010 <- census2010[,c("Geo_NAME","Geo_CBSA","Geo_REGION","SE_T001_001")]
 
 ## Select part of metro with largest population
@@ -29,14 +30,14 @@ metros <- census2010[census2010$i %in% vals,]
 metros <- merge(xwlk,metros,by="Geo_CBSA")
 
 ## Load Zillow data and merge to Census
-load("data/zillow_long.Rdata")
+load("../data/zillow_long.Rdata")
 zillow_acs <- merge(zillow.long,metros,by="RegionID",all.x=TRUE)
 head(zillow_acs[zillow_acs$month==0,
                    c("RegionName","Geo_NAME")],20) #Check merge
 
 ## PREPARE DATA
 zillow_acs <- zillow_acs[order(zillow_acs$RegionName,zillow_acs$month),]
-zillow_acs <- zillow_acs[zillow_acs$month>=(max(zillow_acs$month)-12),]
+zillow_acs <- zillow_acs[zillow_acs$month>=(max(zillow_acs$month)-24),]
 zillow_acs$month <- zillow_acs$month - min(zillow_acs$month)
 zillow_acs$lnvalue_ti <- log(zillow_acs$value_t)
 zillow_acs$Geo_REGION <- factor(zillow_acs$Geo_REGION,
@@ -57,33 +58,84 @@ g.samp <- ggplot(zillow_acs[zillow_acs$RegionName%in%samp,],
 g.samp
 
 ## ANALYZE THE DATA
-## Assume that increases in home values are constant across regions
-m.ana <- lmer(lnvalue_ti ~ month + Geo_REGION + (1 + month | RegionID),data=zillow_acs)
+m.ana <- lmer(lnvalue_ti ~ month * SizeRank + Geo_REGION + 
+                  (1 + month | RegionID), data=zillow_acs)
 summary(m.ana)
 m.ana.fe <- fixef(m.ana)
 m.ana.re <- ranef(m.ana)$RegionID
 
-## Plot results by region
+## PLOT RESULTS BY REGION
+## Get predicted values for each region
 mock <- data.frame(
-    Geo_REGION = rep(levels(zillow_acs$Geo_REGION),each=13),
-    month = rep(0:12,4)
+    Geo_REGION = rep(levels(zillow_acs$Geo_REGION),each=25),
+    SizeRank = 75,
+    month = rep(0:24,4)
 )
-mock$lnvalue_ti_hat_1 <- predict(m.ana,newdata=mock,re.form=NA)
-g.intonly <- ggplot(data=mock,aes(x=month,y=lnvalue_ti_hat_1,
+mock$lnvaluehat_ti <- predict(m.ana,newdata=mock,re.form=NA)
+
+## Plot the predicted logged value/sqft, the scale at which the model was 
+## estimated
+g.link <- ggplot(data=mock,aes(x=month,y=lnvaluehat_ti,
                      group=Geo_REGION,color=Geo_REGION)) +
                 geom_line()
-g.intonly
+g.link
 
-## Assume that increases in home values differ by region
-m.ana2 <- lmer(lnvalue_ti ~ month * Geo_REGION + (1 + month | RegionID),
-               data=zillow_acs)
-summary(m.ana2)
+## Plot the predicted value/sqft (in dollars)
+g.resp <- ggplot(data=mock,aes(x=month,y=exp(lnvaluehat_ti),
+                               group=Geo_REGION,color=Geo_REGION)) +
+    geom_line(size=1.5) 
+g.resp
 
-## Plot results by region
-mock$lnvalue_ti_hat_2 <- predict(m.ana2,newdata=mock,re.form=NA)
-g.intslp <- ggplot(data=mock,aes(x=month,y=lnvalue_ti_hat_2,
-                     group=Geo_REGION,color=Geo_REGION)) +
-                geom_line()
-g.intslp
+## Now we can make the plot look pretty for publications, etc.
+month_labels <- mapply(
+    paste, rep(month.abb,3)[seq(3,27,3)], c(rep(c(2018,2019), each=4), 2020)
+)
+g.region <- g.resp +
+    scale_x_continuous(
+        breaks=seq(0,24,3), 
+        labels=month_labels) +
+    labs(
+        title="Predicted change in price by region",
+        subtitle="March 2018-Mar 2020",
+        y="Predicted price per sq. ft.", x="Month",
+        color="Region"
+        ) +
+    theme(legend.position = "bottom")
+g.region
 
+## PLOT PREDICTED VALUES BY SIZE OF METRO AREA
+mock <- data.frame(
+    Geo_REGION = "Northeast",
+    SizeRank = c(25, 75, 125),
+    month = rep(0:24,3)
+)
+mock$lnvaluehat_ti <- predict(m.ana,newdata=mock,re.form=NA)
+mock$SizeRank <- factor(mock$SizeRank)
 
+## Plot values in logged price/sqft
+g.link <- ggplot(data=mock,aes(x=month,y=lnvaluehat_ti,
+                               group=Geo_REGION,color=Geo_REGION)) +
+    geom_line()
+g.link
+
+## Plot values in price/sqft
+g.resp <- ggplot(data=mock,aes(x=month,y=exp(lnvaluehat_ti),
+                               group=SizeRank,color=SizeRank)) +
+    geom_line()
+g.resp
+
+## Make pretty
+g.pres <- g.resp +
+    scale_color_manual(values=c("#0000dd", "#0000aa", "#000066")) +
+    scale_x_continuous(
+        breaks=seq(0,24,3), 
+        labels=month_labels) +
+    scale_y_continuous(limits=c(100,265)) +
+    labs(
+        title="Predicted change in price by population rank of metro area",
+        subtitle="March 2018-Mar 2020",
+        y="Predicted price per sq. ft.", x="Month",
+        color="Rank"
+    ) +
+    theme(legend.position = "bottom")
+g.pres

@@ -7,6 +7,7 @@
 rm(list=ls())
 source("R/_functions.R")
 library(lme4)
+library(ggplot2)
 
 ## SIMULATE DATA BASED ON KNOWN PARAMETERS
 ## Set the number of individuals and the number of observations for each
@@ -20,7 +21,7 @@ N.i.non <- 10
 
 ## Set deterministic parameters of the model. This is what we had before.
 gamma00 <- 70
-gamma10 <- 10
+gamma10 <- 12.5
 
 ## Now we are going to make sure that we indicate which class they belong to
 gamma00.com <- gamma00
@@ -53,11 +54,12 @@ u1.i.non <- rep(u1.non,each=N.t)
 e  <- rnorm((N.i.com+N.i.non)*N.t,0,sigma)
 
 ## Make a dataset combining our compliant and noncompliant groups
-df <- matrix(c(u0.i.com,u1.i.com),length(u0.i.com),2)
-df <- rbind(df,matrix(c(u0.i.non,u1.i.non),length(u0.i.non),2))
-df <- as.data.frame(df)
-names(df) <- c('u0.i','u1.i')
-df$e <- e
+df <- data.frame(
+    grp=c(rep("com", N.i.com*N.t), rep("non", N.i.non*N.t)),
+    u0.i= c(u0.i.com, u0.i.non),
+    u1.i= c(u1.i.com, u1.i.non),
+    e.it= e
+)
 
 ## Create time variable and person label
 df$time <- rep(0:(N.t-1),N.i.com+N.i.non)
@@ -70,23 +72,22 @@ df$y <- df$u0.i + df$u1.i*df$time + df$e
 ## Compliant group: red
 ## Noncompliant group: blue
 f.df <- by(df,df$i,function(data) fitted(lm(y~time,data=data)))
-plot(0,0,type='n',
-     xlim=c(-1,10),ylim=c(min(unlist(f.df)),max(unlist(f.df))),
-     ylab='y',xlab='time')
-l <- sapply(f.df[1:N.i.com],
-            function(data) lines(c(0:t.fin),data,lty=2,col='red'))
-l <- sapply(f.df[-1:-N.i.com],
-            function(data) lines(c(0:t.fin),data,lty=2,col='blue'))
+g.base <- ggplot(df, aes(x=time, y=y, group=i, color=grp)) +
+    geom_smooth(method="lm", se=FALSE, size=.5, linetype=2) +
+    scale_color_manual(values=c("orange", "darkblue"))
+g.base
 
 ## What would happen if we estimated a single growth trajectory model?
 m0 <- lmer(df$y ~ df$time + (1 + df$time | df$i))
 summary(m0)
-m0.fe <- fixef(m0)
-lines(c(0,t.fin),c(m0.fe[1],m0.fe[1]+t.fin*m0.fe[2]),lwd=4)
+m0.fe <- lme4::fixef(m0)
+g.base + 
+    geom_abline(intercept=m0.fe[1], slope=m0.fe[2], color="darkred", size=1.5)
 
 ## Now we estimate the latent growth trajectory model
 library('lcmm')
-m1.hlme <-hlme(y~time,subject='i',ng=2,mixture=~time,idiag=TRUE,data=df)
+m1.hlme <-hlme(y~time, subject='i', ng=2, 
+               mixture=~time ,idiag=TRUE, random=~time, data=df)
 summary(m1.hlme)
 lines(c(0,t.fin),c(m1.hlme$best[3],m1.hlme$best[3]+t.fin*m1.hlme$best[5]),
       lty=2,lwd=3,col='red')

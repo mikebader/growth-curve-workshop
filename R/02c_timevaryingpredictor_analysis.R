@@ -1,24 +1,22 @@
+#### ANALYSIS EXAMPLE: TIME-INVARIANT PREDICTORS ####
+## Description: This file analyzes Zillow dataset assuming random intercept
+##              and random slopes for 150 largest metros with Census region
+##              used to refine estimates of intercepts and slopes
+## Author: Michael Bader
+
 rm(list=ls())
-bls_url <- "https://www.bls.gov/web/metro/ssamatab1.txt"
+source('R/_functions.R')
+library(ggplot2)
+library(lme4)
+library(cowplot)
 
-bls <- read.fwf(bls_url,c(16,7,12,64,8,6,10,18,14,14))
-bls <- bls[-1:-5,]
-names(bls) <- c("laus","stfips","fips","name","year","month",
-                "civ_labor_force","employment","unemployment",
-                "unemp_rate")
-numvars <- c("stfips","fips","year","month","unemp_rate")
-bls[,numvars] <- apply(bls[,numvars],2,function(x) as.numeric(as.character(x)))
-charvars <- c("laus","name")
-bls[,charvars] <- apply(bls[,charvars],2,function(x) trimws(as.character(x)))
-bls <- bls[,c("name",numvars)]
-bls$uniqid <- paste0(
-                sprintf("%05.0f",bls$fips),
-                sprintf("%04.0f",bls$year),
-                sprintf("%02.0f",bls$month)
-                )
+## GATHER DATA
+## Load Bureau of Labor Statistics monthly unemployment data
+bls <- read.csv('../data/bls.csv')
 
-
+## MERGE ZILLOW DATA TO BLS DATA
 load("data/zillow_long.Rdata")
+zillow.long <- zillow.long[,-3]
 xwlk_url <- 'http://files.zillowstatic.com/research/public/CountyCrossWalk_Zillow.csv'
 xwlk <- read.csv(xwlk_url,header=TRUE)[,c('CBSAName','MetroRegionID_Zillow', 'CBSACode')]
 xwlk <- xwlk[!duplicated(xwlk),]
@@ -39,40 +37,55 @@ zillow.bls$uniqid <- paste0(
 zillow.bls <- merge(zillow.bls,bls[,c("uniqid","unemp_rate")],by="uniqid",all.x=TRUE)
 
 zillow.bls$lnvalue_ti <- log(zillow.bls$value_t)
-zillow.bls <- zillow.bls[zillow.bls$month>=(max(zillow.bls$month)-12),]
+zillow.bls <- zillow.bls[zillow.bls$month>=(max(zillow.bls$month)-24),]
 zillow.bls$month <- zillow.bls$month - min(zillow.bls$month)
+zillow.bls <- zillow.bls[,-8:-9]
 
 ## DESCRIBE THE DATA
+head(zillow.bls)
 cor(zillow.bls[,c("lnvalue_ti","unemp_rate")],use="complete.obs")
 
-## ANALYZE THE DATA
+## MODEL WITH RANDOM INTERCEPTS
 m.ana <- lmer(lnvalue_ti~month + unemp_rate + (1|RegionID),data=zillow.bls)
 summary(m.ana)
 
+## When I estimated a model with random slopes, the variance component on
+## the random slope effect (i.e., rho_1) was *very* small, and led to 
+## convergence problems. I decided to use only a random intercepts model
+## instead. 
+##
+## If you want to see what the model with random slopes looks like, then 
+## uncomment the following two lines
+# m.slp <- lmer(lnvalue_ti~month + unemp_rate + (1 + month|RegionID),data=zillow.bls)
+# summary(m.slp)
+
 ## INTERPRET THE RESULTS
+## We will interpret what happens if the unemployment rate drops 4% halfway
+## through our study period. This is an unreasonable change, but it 
+## illustrates the change well. 
+
+## Make a mock dataset with values at which we want data to be estimated
 mean_unemp <- mean(zillow.bls[zillow.bls$month==0,"unemp_rate"],na.rm=TRUE)
 mock <- data.frame(
-    RegionID <- factor(rep(1:2,each=13),
-                       labels=c("mean unemp.","1 pct. decline")),
-    month <- rep(0:12,2),
-    unemp_rate <- c(rep(mean_unemp,13),mean_unemp*0:12*(-1/12))
+    RegionID = factor(rep(1:2,each=25),
+                      labels=c("constant unemp.","4 pct. decline\n(Mar 2019)")),
+    month = rep(0:24,2),
+    unemp_rate = c(rep(mean_unemp,25), rep(0, 12), rep(-4, 13))
 )
 mock$lnvalue_ti_hat <- predict(m.ana,newdata=mock,re.form=NA)
+mock$value_ti_hat <- exp(mock$lnvalue_ti_hat)
 
-ggplot(data=mock,aes(x=month,y=lnvalue_ti_hat,
+## Plot change due to 4% decline in unemployment in March 2019
+month_labels <- mapply(paste, 
+                       rep(month.abb, 3)[seq(3,28,4)], 
+                       rep(2018:2020, each=3)[1:7])
+g.full <- ggplot(data=mock,aes(x=month,y=value_ti_hat,
                      group=RegionID,color=RegionID)) +
-    geom_line()
-
-## MODEL WITH RANDOM INTERCEPTS & SLOPES
-m.ana2 <- lmer(lnvalue_ti~month + unemp_rate + (1+month|RegionID),data=zillow.bls)
-summary(m.ana2)
-
-mock$lnvalue_ti_hat_2 <- predict(m.ana2,newdata=mock,re.form=NA)
-ggplot(data=mock,aes(x=month,y=lnvalue_ti_hat_2,
-                     group=RegionID,color=RegionID)) +
-    geom_line()
-
-## CENTER UNEMPLOYMENT
-zillow.bls$unemp_rate_c <- zillow.bls$unemp_rate - mean_unemp
-m.ana3 <- lmer(lnvalue_ti~month + unemp_rate_c + (1+month|RegionID),data=zillow.bls)
-summary(m.ana3)
+    geom_line() +
+    scale_x_continuous(breaks=seq(0,24,4), labels=month_labels)
+g.detail <- ggplot(data=mock[mock$month%in%10:15,], 
+                   aes(x=month, y=value_ti_hat, group=RegionID, 
+                       color=RegionID)) +
+    geom_line() +
+    scale_x_continuous(breaks=10:15, labels=paste(month.abb[1:6], "2019"))
+plot_grid(g.full, g.detail, nrow=2)
