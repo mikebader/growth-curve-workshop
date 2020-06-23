@@ -2,7 +2,7 @@
 ## Description: This file downloads and creates datasets for use in workshop
 ## Author: Michael Bader
 
-wd <- '' ## Paste the path to the class directory you downloaded in the quotes
+wd <- '/Users/bader/work/Teaching/Workshops/GrowthCurveModeling/teaching-growth-curve-workshop/R/' ## Paste the path to the class directory you downloaded in the quotes
 init <- function(wd) {
     rm(list=ls())
 
@@ -25,7 +25,7 @@ init <- function(wd) {
     zillow <- read.csv(price.sq.ft.url,header=TRUE)[2:151,]
 
     ## Save Zillow data object
-    save(zillow,file="data/zillow.RData")
+    save(zillow,file="../data/zillow.RData")
 
     #### RESHAPE ZILLOW DATA
     ## Relabel variables to indicate that they represent housing values
@@ -52,7 +52,28 @@ init <- function(wd) {
     zillow.long$year <- rep(years,N)
 
     ## Save long-format Zillow data
-    save(zillow.long,file="data/zillow_long.RData")
+    save(zillow.long,file="../data/zillow_long.RData")
+    
+    ## GATHER AND FORMAT BLS MONTHLY UNEMPLOYMENT DATA
+    ## Get data on the unemployment rate by metropolitan area from the 
+    ## Bureau of Labor Statistics
+    bls_url <- "https://www.bls.gov/web/metro/ssamatab1.txt"
+    bls <- read.fwf(bls_url,c(16,7,12,64,8,6,10,18,14,14))
+    bls <- bls[-1:-5,]
+    names(bls) <- c("laus","stfips","fips","name","year","month",
+                    "civ_labor_force","employment","unemployment",
+                    "unemp_rate")
+    numvars <- c("stfips","fips","year","month","unemp_rate")
+    bls[,numvars] <- apply(bls[,numvars],2,function(x) as.numeric(as.character(x)))
+    charvars <- c("laus","name")
+    bls[,charvars] <- apply(bls[,charvars],2,function(x) trimws(as.character(x)))
+    bls <- bls[,c("name",numvars)]
+    bls$uniqid <- paste0(
+        sprintf("%05.0f",bls$fips),
+        sprintf("%04.0f",bls$year),
+        sprintf("%02.0f",bls$month)
+    )
+    write.csv(bls, '../data/bls.csv')
 }
 init(wd)
 
