@@ -14,9 +14,9 @@ library(MASS)
 ## PLAN THE POPULATION
 month <- c(0:23)
 N  <- 150
-Nt <- length(month)
+N_t <- length(month)
 t  <- rep(month,N)
-i  <- rep(c(1:N),each=Nt)
+i  <- rep(c(1:N),each=N_t)
 
 gamma_00 <- log(117)
 gamma_10 <- 0.005
@@ -34,7 +34,7 @@ beta_0i <- gamma_00 + tau[,1]
 beta_1i <- gamma_10 + tau[,2]
 
 ## Create individual change trajectories
-lnvalue_ti <- rep(beta_0i,each=Nt) + rep(beta_1i,each=Nt)*t + rnorm(N*Nt,0,sigma_ti)
+lnvalue_ti <- rep(beta_0i,each=N_t) + rep(beta_1i,each=N_t)*t + rnorm(N*N_t,0,sigma_ti)
 d.sim <- data.frame(i,t,lnvalue_ti)
 head(d.sim,30)
 

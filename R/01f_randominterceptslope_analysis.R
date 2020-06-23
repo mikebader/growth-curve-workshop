@@ -3,16 +3,8 @@
 ##              and random slopes for 150 largest metros
 ## Author: Michael Bader
 
-## SHOW THAT SLOPES DO VARY ACROSS METRO AREAS IN ZILLOW DATA
-source('R/01d_randomintercepts_analysis.R')
-betas <- by(zillow.long,zillow.long$RegionID,function(d) lm(lnvalue_ti~month,data=d))
-slopes <- t(sapply(betas,coef))[,"month"]
-qplot(slopes,bins=15)
-
-## Prepare environment
-rm(list=ls()[!(ls()%in% "zillow.long")]) ## Removes all variables from
-                                         ## environment except zillow.long
-source('_functions.R')
+rm(list=ls())
+source('01d_randomintercepts_analysis.R')
 library(MASS)
 library(lme4)
 library(ggplot2)
@@ -20,6 +12,11 @@ library(cowplot)
 
 ## GATHER THE DATA
 ## The data are the same as those used in the random intercept model
+
+## SHOW THAT SLOPES DO VARY ACROSS METRO AREAS IN ZILLOW DATA
+betas <- by(zillow.long,zillow.long$RegionID,function(d) lm(lnvalue_ti~month,data=d))
+slopes <- t(sapply(betas,coef))[,"month"]
+qplot(slopes,bins=15)
 
 ## DESCRIBE THE DATA
 g.sim <- ggplot(zillow.long,aes(x=month,y=lnvalue_ti,group=RegionID)) +
@@ -65,7 +62,7 @@ zillow.long$e_ti <- (zillow.long$e_tot - zillow.long$r_0i - zillow.long$r_1iXt)
 g.r0i <- qplot(m.ana.re[,1], bins=10)        ## Distribution of r_0i
 g.r1i <- qplot(m.ana.re[,2], bins=10)        ## Distribution of r_1i
 g.eti <- qplot(zillow.long$e_ti, bins=1000)  ## Distribution of e_ti
-(g.err <- plot_grid(g.r0i, g.r1i, g.eti, ncol=1))
+g.err <- plot_grid(g.r0i, g.r1i, g.eti, ncol=1)
 
 ## EXAMPLE METRO-SPECIFIC TRENDS
 ex.metros <- c(394640,394974,395012)
@@ -83,7 +80,7 @@ ggsave("images/0105_randominterceptsslopes_example.png",
 
 ## Ignore Below (used for writing values to my lecture notes)
 m.ana.fe <- fixef(m.ana)
-f <- file("lecture/_0105-analysis-estimates.tex")
+f <- file("../lecture/_0105-analysis-estimates.tex")
 corrcoef <- attr(VarCorr(m.ana)$RegionID, "correlation")
 writeLines(c(
     paste0("\\newcommand{\\intercept}{",round(m.ana.fe[1],3),"}"),
