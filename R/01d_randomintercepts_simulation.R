@@ -5,25 +5,25 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("R/_functions.R")
+source("_functions.R")
 library(ggplot2) # This loads a library that makes prettier plots than standard R
 
 ## PLAN POPULATION
 month <- c(0:12)
 N <- 150
 N_t <- length(month)
-t <- rep(month,N)
-i <- as.factor(rep(c(1:N),each=T))
+t <- rep(month, N)
+i <- as.factor(rep(c(1:N), each=N_t))
 
 sigma_it <- 0.002
 tau_0i <- 0.10
 
-beta_1  <- 0.005
 beta_0  <- log(100) + rnorm(N,0,tau_0i)
+beta_1  <- 0.005
 
 ## CONJURE POPULATION
 beta_0i <- rep(beta_0,each=N_t)
-lnvalue_it <- beta_0i + beta_1*t + rnorm(N*T,0,sigma_it)
+lnvalue_it <- beta_0i + beta_1*t + rnorm(N*N_t,0,sigma_it)
 d.sim <- data.frame(i,t,lnvalue_it)
 
 g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_it,group=i)) + geom_line()
