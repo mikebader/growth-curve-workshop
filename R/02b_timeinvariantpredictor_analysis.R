@@ -61,6 +61,7 @@ g.samp
 m.ana <- lmer(lnvalue_ti ~ month * SizeRank + Geo_REGION + 
                   (1 + month | RegionID), data=zillow_acs)
 summary(m.ana)
+huxtable::huxreg(m.ana)
 m.ana.fe <- fixef(m.ana)
 m.ana.re <- ranef(m.ana)$RegionID
 

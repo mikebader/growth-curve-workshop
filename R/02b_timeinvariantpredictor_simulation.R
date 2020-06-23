@@ -12,9 +12,9 @@ library(ggplot2)
 
 month <- c(0:12)
 N <- 150
-T <- length(month)
+N_t <- length(month)
 t <- rep(month,N)
-i <- rep(c(1:N),each=T)
+i <- rep(c(1:N),each=N_t)
 
 lnpop_i <- rnorm(N,0,1.4) + 13
 
@@ -23,21 +23,23 @@ gamma_01 <- 0.2
 gamma_10 <- 0.005
 gamma_11 <- 0.001
 sigma_ti <- 0.002
-tau_0i <- 0.005
-tau_1i <- 0.004
+tau_00 <- 0.005
+tau_11 <- 0.004
 tau_01 <- 0
-
-
+Tau <- matrix(c(tau_00, tau_01, tau_01, tau_11), nrow=2)
 
 ## CONJURE THE POPULATION
-metros <- mvrnorm(N,c(0,0),matrix(c(tau_0i,tau_01,tau_01,tau_1i),nrow=2))
+metros <- mvrnorm(N, c(0,0), Tau)
 var(metros)
 beta_0 <- gamma_00 + gamma_01*lnpop_i + metros[,1]
+beta_0i <- rep(beta_0, each= N_t)
 beta_1 <- gamma_10 + gamma_11*lnpop_i + metros[,2]
-
-
-lnvalue_ti <- rep(beta_0,each=T) + rep(beta_1,each=T)*t +rnorm(N*T,0,sigma_ti)
-d.sim <- data.frame(i,t,lnvalue_ti,lnpop_i=rep(lnpop_i,each=T))
+beta_1i <- rep(beta_1, each= N_t)
+d.sim <- data.frame(
+    i, t,
+    lnpop_i = rep(lnpop_i, each=N_t), 
+    lnvalue_ti = beta_0i + beta_1i + rep(lnpop_i, each=N_t)
+)
 
 ## DESCRIBE DATA
 ggplot(data=d.sim,aes(x=t,y=lnvalue_ti,group=i)) +
@@ -62,19 +64,19 @@ m.sim.re <- ranef(m.sim.cen)$i
 
 g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_ti,group=i)) +
     geom_line() +
-    geom_abline(intercept=m.sim.fe[1],slope=m.sim.fe[2],color="orange",size=1.5) +
+    geom_abline(intercept=m.sim.fe[1],slope=m.sim.fe[2], color="orange", size=1.5) +
     scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[5:17])
 g.sim
 
 sd1_pop <- sd(lnpop_i) + mean_pop
-g.sim.diff <- g.sim + geom_abline(
-    intercept=m.sim.fe[1],
-    slope=I(m.sim.fe[2] + m.sim.fe[3]*sd1_pop),
-    color="red",size=1.5
+g.sim.diff <- g.sim +
+    geom_abline(
+        intercept=m.sim.fe[1], slope=m.sim.fe[2] + m.sim.fe[3]*sd1_pop,
+        color="red",size=1.5
     )
 g.sim.diff
 d.sim$lnvalue_ti_hat <- predict(m.sim)
-d.sim[,c("r_0i","r_1i")] <- apply(m.sim.re,1,rep,each=T)
+d.sim[,c("r_0i","r_1i")] <- apply(m.sim.re,1,rep,each=N_t)
 d.sim$e_ti <- d.sim$lnvalue_ti - (d.sim$lnvalue_ti_hat + d.sim$r_0i + d.sim$r_1i)
 d.sim$rand_slope <- d.sim$r_1i * t
 
