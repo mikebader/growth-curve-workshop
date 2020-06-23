@@ -5,7 +5,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source('R/_functions.R')
+source('_functions.R')
 library(lme4)
 library(ggplot2)
 
@@ -13,9 +13,9 @@ library(ggplot2)
 ## PLAN THE POPULATION
 month <- c(0:12)
 N <- 150
-T <- length(month)
+N_t <- length(month)
 t <- rep(month,N)
-i <- rep(c(1:N),each=T)
+i <- rep(c(1:N),each=N_t)
 
 gamma_00 <- log(117)
 gamma_10 <- 0.005
@@ -25,9 +25,9 @@ tau_1i <- 0.002
 ## CONJURE THE POPULATION
 set.seed(20180628)
 beta_1i <- gamma_10 + rnorm(N,0,tau_1i)
-lnvalue_ti <- gamma_00 + rep(beta_1i,each=T)*t + rnorm(N*T,0,sigma_ti)
+lnvalue_ti <- gamma_00 + rep(beta_1i,each=N_t)*t + rnorm(N*N_t,0,sigma_ti)
 d.sim <- data.frame(i,t,lnvalue_ti)
-head(d.sim,T*2) ## Observe data for two "metros"
+head(d.sim,N_t*2) ## Observe data for two "metros"
 
 ## DESCRIBE OUR POPULATION
 g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_ti,group=i)) + geom_line()
@@ -112,5 +112,5 @@ g.two.zoom <- g.two +
         scale_x_continuous(limits=c(3,5)) +
         scale_y_continuous(limits=c(4.76,4.80)
         )
-ggsave("images/0104_twotrends_zoomdetail.png",
+ggsave("../images/0104_twotrends_zoomdetail.png",
        plot=g.two.zoom,height=2.5,width=4,units="in")
