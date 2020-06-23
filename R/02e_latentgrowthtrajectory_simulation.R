@@ -5,7 +5,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source("R/_functions.R")
+set.seed(-1864853683) ## Set seed to ensure reproducibility of simulations
 library(lme4)
 library(ggplot2)
 
@@ -72,32 +72,66 @@ df$y <- df$u0.i + df$u1.i*df$time + df$e
 ## Compliant group: red
 ## Noncompliant group: blue
 f.df <- by(df,df$i,function(data) fitted(lm(y~time,data=data)))
-g.base <- ggplot(df, aes(x=time, y=y, group=i, color=grp)) +
-    geom_smooth(method="lm", se=FALSE, size=.5, linetype=2) +
-    scale_color_manual(values=c("orange", "darkblue"))
+g.base <- ggplot(df, aes(x=time, y=y, group=i)) +
+    geom_smooth(method="lm", se=FALSE, size=.5, linetype=2, 
+                color="#bc509088") 
 g.base
 
 ## What would happen if we estimated a single growth trajectory model?
 m0 <- lmer(df$y ~ df$time + (1 + df$time | df$i))
 summary(m0)
 m0.fe <- lme4::fixef(m0)
-g.base + 
-    geom_abline(intercept=m0.fe[1], slope=m0.fe[2], color="darkred", size=1.5)
+g.lga <- g.base + 
+    geom_abline(intercept=m0.fe[1], slope=m0.fe[2], color="#bc5090ff", size=1.5)
+g.lga
 
-## Now we estimate the latent growth trajectory model
+## Now we estimate the growth mixture model model
 library('lcmm')
 m1.hlme <-hlme(y~time, subject='i', ng=2, 
-               mixture=~time ,idiag=TRUE, random=~time, data=df)
+               mixture=~1+time, idiag=TRUE, random=~1+time, data=df)
 summary(m1.hlme)
-lines(c(0,t.fin),c(m1.hlme$best[3],m1.hlme$best[3]+t.fin*m1.hlme$best[5]),
-      lty=2,lwd=3,col='red')
-lines(c(0,t.fin),c(m1.hlme$best[2],m1.hlme$best[2]+t.fin*m1.hlme$best[4]),
-      lty=2,lwd=3,col='blue')
+gammas1 <- m1.hlme$best[c(2,4)] ## Gamma values for class 1
+gammas2 <- m1.hlme$best[c(3,5)] ## Gamma values for class 2
 
-## Now we estimate the growth mixture model that includes stochastic terms
-## (Growth Mixture Model)
-m2.hlme <-hlme(y~time,subject='i',random=~time,ng=2,mixture=~time,idiag=TRUE,data=df)
+## Plot trajectories for each class
+g.gmm = g.lga +
+    geom_abline(aes(intercept = gammas1[1], slope = gammas1[2]), 
+                color="#ffa600", size=2) +
+    geom_abline(aes(intercept = gammas2[1], slope = gammas2[2]), 
+                color="#003f5c", size=2) 
+g.gmm
+
+## Gather the predicted probabilities of class membership
+## Variables:
+##   i = Grouping variable (will have the same name as the variable used 
+##       in option `subject` in the model call above)
+##   class: Class with the highest predicted probability of membership
+##   prob<N>: Probability that the group belongs to class <N>
+pprob <- m1.hlme$pprob
+
+## Since we know "Truth", we can see how well the model predicts class
+## membership into the classes that we assigned
+pred <- merge(df, pprob, "i")
+table(pred$grp, pred$class)
+
+## We can also graph the trajectories based on predicted class membership 
+## to see how well each trajectory summarizes individuals predicted to be 
+## in the class
+g.classes <- ggplot(pred, aes(x=time, y=y, color=factor(class), group=i)) +
+    geom_line(linetype=2) +
+    geom_abline(aes(intercept = gammas1[1], slope = gammas1[2]), 
+                color="#003f5c", size=2) +
+    geom_abline(aes(intercept = gammas2[1], slope = gammas2[2]), 
+                color="#ffa600", size=2) +
+    scale_color_manual(values = c("#374c80", "#ff764a"))
+g.classes
+
+## CHECK NUMBER OF CLASSES
+## Run the model estimating one additional class and compare the AIC/BIC
+## values
+m2.hlme <-hlme(y~time, subject='i', ng=3, 
+               mixture=~1+time, idiag=TRUE, random=~1+time, data=df)
 summary(m2.hlme)
-lines(c(0,t.fin),c(m2.hlme$best[2],m2.hlme$best[2]+t.fin*m2.hlme$best[4]),lty=3,lwd=3,col='green')
-lines(c(0,t.fin),c(m2.hlme$best[3],m2.hlme$best[3]+t.fin*m2.hlme$best[5]),lty=3,lwd=3,col='orange')
 
+list("AIC" = c(`two class`=m1.hlme$AIC, `three class`=m2.hlme$AIC),
+     "BIC" = c(`two class`=m1.hlme$BIC, `three class`=m2.hlme$BIC))
