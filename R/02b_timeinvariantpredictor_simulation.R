@@ -98,7 +98,7 @@ g.orig
 ## standard deviation above and below the mean population
 m <- 0:12
 sd_lnpop <- sd(d.sim$lnpop_i)
-ggplot() +
+g.pres <- ggplot() +
     scale_x_continuous(limits = c(0,11)) +
     scale_y_continuous(limits = c(4, 5.1)) +
     geom_abline(intercept = fixef(m.ctr)[1], slope = fixef(m.ctr)[3]) + ## Mean pop
@@ -119,3 +119,4 @@ ggplot() +
         y = "Logged price/sq.ft.",
         x = "Month"
     )
+g.pres 
