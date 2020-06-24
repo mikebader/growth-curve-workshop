@@ -10,81 +10,112 @@ library(MASS)
 library(lme4)
 library(ggplot2)
 
-month <- c(0:12)
 N <- 150
-N_t <- length(month)
-t <- rep(month,N)
-i <- rep(c(1:N),each=N_t)
+N_t <- 12
+pop_i <- rgamma(N, 1.5, 0.1)*20000 ## Fake distribution of metro populations
 
-lnpop_i <- rnorm(N,0,1.4) + 13
+gamma_00 <- 0        ## Value is zero when population equals zero
+gamma_01 <- .37      ## Effect of lnpop on intercept
+gamma_10 <- 0.03/12    ## Monthly percentage growth
+gamma_11 <- 0.01/12   ## Additional growth for each percent increase in lnpop
+sigma_e  <- 0.0001
+tau_00   <- 0.100^2
+tau_11   <- 0.005^2
+tau_01   <- 0
+Tau      <- matrix(c(tau_00, tau_01, tau_01, tau_11), nrow=2)
 
-gamma_00 <- log(117)
-gamma_01 <- 0.2
-gamma_10 <- 0.005
-gamma_11 <- 0.001
-sigma_ti <- 0.002
-tau_00 <- 0.005
-tau_11 <- 0.004
-tau_01 <- 0
-Tau <- matrix(c(tau_00, tau_01, tau_01, tau_11), nrow=2)
+## Draw random sample of level-2 components 
+rhos <- mvrnorm(N, c(0,0), Tau)
 
-## CONJURE THE POPULATION
-metros <- mvrnorm(N, c(0,0), Tau)
-var(metros)
-beta_0 <- gamma_00 + gamma_01*lnpop_i + metros[,1]
-beta_0i <- rep(beta_0, each= N_t)
-beta_1 <- gamma_10 + gamma_11*lnpop_i + metros[,2]
-beta_1i <- rep(beta_1, each= N_t)
+beta_0 <- rep(gamma_00 + gamma_01*log(pop_i) + rhos[,1], each=N_t)
+beta_1 <- rep(gamma_10 + gamma_11*log(pop_i) + rhos[,2], each=N_t)
+
 d.sim <- data.frame(
-    i, t,
-    lnpop_i = rep(lnpop_i, each=N_t), 
-    lnvalue_ti = beta_0i + beta_1i + rep(lnpop_i, each=N_t)
+    i=rep(1:N, each=N_t), 
+    month=rep(0:(N_t-1), N),
+    lnpop_i=rep(log(pop_i), each=N_t)
 )
+d.sim$lnvalue_ti <- beta_0 + beta_1*d.sim$month + rnorm(N*N_t, 0, sigma_e)
+head(d.sim, 24)
 
 ## DESCRIBE DATA
-ggplot(data=d.sim,aes(x=t,y=lnvalue_ti,group=i)) +
-    geom_line(aes(color=lnpop_i))
+## Plot individual trajectories
+g.desc <- ggplot(d.sim, aes(x=month, y=lnvalue_ti, group=i)) + 
+    geom_line() 
+g.desc 
 
-## ANALYZE DATA
-## Analyze data predicting both stochastic component on intercept & on slope
-m.sim <- lmer(lnvalue_ti ~ lnpop_i + t + I(t*lnpop_i) + (1 + t|i),data=d.sim)
+## Estimate regression for each group i, accounting for lnpop
+betas <- sapply(unique(d.sim$i), function(i){
+    coef(lm(lnvalue_ti ~ month, data=d.sim[d.sim$i==i,]))
+})
+
+## Plot distribution of intercepts
+qplot(betas[1,], bins=15) +
+    geom_vline(xintercept = mean(betas[1,]), color="orange", size=1.5) 
+
+## Plot distribution of slopes
+qplot(betas[2,], bins=15) + 
+    geom_vline(xintercept = mean(betas[2,]), color="orange", size=1.5) +
+    scale_x_continuous(breaks=c(-.02,.03,.005))
+
+## ANALYZE THE DATA
+m.sim <- lmer(lnvalue_ti ~ lnpop_i*month + (1 + month | i), data=d.sim)
 summary(m.sim)
-m.sim.fe <- fixef(m.sim)
-m.sim.re <- ranef(m.sim)$i
 
-mean_pop <- mean(lnpop_i)
+## It might help to interpret the results if the intercept was not 
+## when (logged) population equals zero, but at the mean population across 
+## metropolitan areas
+d.sim$lnpop_i_orig <- d.sim$lnpop_i
+d.sim$lnpop_i <- d.sim$lnpop_i - mean(d.sim$lnpop_i)
+m.ctr <- lmer(lnvalue_ti ~ lnpop_i*month + 
+                  (1 + month | i), data=d.sim)
+summary(m.ctr)
+huxtable::huxreg(m.sim, m.ctr)
 
-## Reanalyze same data centering on the mean population (because
-## estimating at population=1 does not help interpretation)
-m.sim.cen <- lmer(lnvalue_ti ~ t + I(t*(lnpop_i-mean_pop)) + (1 + t|i),
-                  data=d.sim)
-summary(m.sim.cen)
-m.sim.fe <- fixef(m.sim.cen)
-m.sim.re <- ranef(m.sim.cen)$i
-
-g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_ti,group=i)) +
-    geom_line() +
-    geom_abline(intercept=m.sim.fe[1],slope=m.sim.fe[2], color="orange", size=1.5) +
-    scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[5:17])
-g.sim
-
-sd1_pop <- sd(lnpop_i) + mean_pop
-g.sim.diff <- g.sim +
+## Let's use the centered model to plot the predicted value on top of the 
+## descriptive data that we plotted before to see how well the model 
+## represents the data 
+g.centered <- g.desc + 
     geom_abline(
-        intercept=m.sim.fe[1], slope=m.sim.fe[2] + m.sim.fe[3]*sd1_pop,
-        color="red",size=1.5
+        intercept=fixef(m.ctr)[1],
+        slope=fixef(m.ctr)[3],
+        color="orange", size=3
     )
-g.sim.diff
-d.sim$lnvalue_ti_hat <- predict(m.sim)
-d.sim[,c("r_0i","r_1i")] <- apply(m.sim.re,1,rep,each=N_t)
-d.sim$e_ti <- d.sim$lnvalue_ti - (d.sim$lnvalue_ti_hat + d.sim$r_0i + d.sim$r_1i)
-d.sim$rand_slope <- d.sim$r_1i * t
+g.centered
 
-sapply(list(mean=mean(d.sim$r_0i),sd=sd(d.sim$r_0i)),round,4)
-sapply(list(mean=mean(d.sim$r_1i),sd=sd(d.sim$r_1i)),round,4)
+## We can show that this centered model is the same as the original model
+## evaluated at the mean value of the logged population
+g.orig <- g.centered +
+    geom_abline(
+        intercept=fixef(m.sim)[1] + fixef(m.sim)[2]*mean(d.sim$lnpop_i_orig),
+        slope=fixef(m.sim)[3] + fixef(m.sim)[4]*mean(d.sim$lnpop_i_orig),
+        color="red", size=1
+    )
+g.orig
 
-ggplot(d.sim,aes(x=t,y=rand_slope,group=i)) +
-    geom_line() +
-    scale_x_continuous(breaks=seq(0,12,1),labels=rep(month.abb,2)[5:17])
-
-
+## To show the influence of population size on the change in housing values
+## we will show the predicted values of logged housing prices at one
+## standard deviation above and below the mean population
+m <- 0:12
+sd_lnpop <- sd(d.sim$lnpop_i)
+ggplot() +
+    scale_x_continuous(limits = c(0,11)) +
+    scale_y_continuous(limits = c(4, 5.1)) +
+    geom_abline(intercept = fixef(m.ctr)[1], slope = fixef(m.ctr)[3]) + ## Mean pop
+    geom_abline(
+        intercept = fixef(m.ctr)[1] + fixef(m.ctr)[2]*sd_lnpop,
+        slope = fixef(m.ctr)[3] + fixef(m.ctr)[4]*sd_lnpop,
+        linetype = 2
+    ) +
+    geom_abline(
+        intercept = fixef(m.ctr)[1] + fixef(m.ctr)[2]*-1*sd_lnpop,
+        slope = fixef(m.ctr)[3] + fixef(m.ctr)[4]*-1*sd_lnpop,
+        linetype = 3
+    ) +
+    labs(
+        title = "Predicted logged values of price/sq.ft. of metro areas",
+        subtitle = "At mean and one standard deviation above/below of logged population",
+        caption = "Note: Based on entirely fake, simulated data",
+        y = "Logged price/sq.ft.",
+        x = "Month"
+    )
