@@ -3,12 +3,11 @@
 ##              and random slopes for 150 largest metros
 ## Author: Michael Bader
 
-rm(list=ls())
 source('01d_randomintercepts_analysis.R')
+library(tidyverse)
 library(MASS)
 library(lme4)
-library(ggplot2)
-library(cowplot)
+library(cowplot) ## Enables plots to be combined
 
 ## GATHER THE DATA
 ## The data are the same as those used in the random intercept model
@@ -16,35 +15,41 @@ library(cowplot)
 ## SHOW THAT SLOPES DO VARY ACROSS METRO AREAS IN ZILLOW DATA
 betas <- by(zillow.long,zillow.long$RegionID,function(d) lm(lnvalue_ti~month,data=d))
 slopes <- t(sapply(betas,coef))[,"month"]
-qplot(slopes,bins=15)
+qplot(slopes,bins=20)
 
 ## DESCRIBE THE DATA
 g.sim <- ggplot(zillow.long,aes(x=month,y=lnvalue_ti,group=RegionID)) +
             geom_line()
 g.sim
 
-sampsize <- 30
-samp <- sample(zillow.long$RegionName,sampsize)
-g.samp <- ggplot(zillow.long[zillow.long$RegionName%in%samp,],
+sampn <- 30
+g.samp <- ggplot(filter(zillow.long, RegionName %in% sample(RegionName, sampn)),
                  aes(x=month,y=lnvalue_ti,group=RegionName)) +
             geom_line()
 g.samp
 
 ## ANALYZE THE DATA
-m.ana <- lmer(lnvalue_ti ~ month + (1 + month | RegionID),data=zillow.long)
+m.ana <- lmer(lnvalue_ti ~ month + (1 + month | RegionID), data=zillow.long)
+## Note error, especially the problems with the Hessian matrix, generally that
+## means that the model has too many parameters
+##
+## Estimate the model based on a diagonal Tau matrix (rather than full)
+# m.ana <- lmer(lnvalue_ti ~ month + (1 + month || RegionID), data=zillow.long)
 summary(m.ana)
+
+
 m.ana.re <- ranef(m.ana)$RegionID
 
 test <- m.ana.re[abs(m.ana.re[,1])<.02,]
 zillow.long[zillow.long$RegionID%in%rownames(test),"RegionName"]
 
 ## INTERPRET THE DATA
-g.pred <- geom_abline(intercept=m.ana@beta[1],slope=m.ana@beta[2],
+g.pred <- geom_abline(aes(intercept=m.ana@beta[1],slope=m.ana@beta[2]),
                       col="orange",size=1.2)
 g.ana <- ggplot(data=zillow.long,aes(x=month,y=lnvalue_ti,group=RegionID)) +
-            geom_line() +
-            g.pred +
-            scale_x_continuous(breaks=seq(0,24,1),labels=rep(month.abb,3)[3:27])
+    geom_line() +
+    g.pred +
+    scale_x_continuous(breaks=seq(0,25,1),labels=rep(month.abb,3)[2:27])
 g.ana
 
 ## Record predicted values and total error
@@ -53,8 +58,8 @@ zillow.long$e_tot <- zillow.long$lnvalue_ti - zillow.long$lnvalue_ti_hat ## Tota
 
 ## Record stochastic components of the model
 m.ana.re <- ranef(m.ana)[["RegionID"]]
-zillow.long$r_0i <- rep(m.ana.re[,1], each=25)
-zillow.long$r_1i <- rep(m.ana.re[,2], each=25)
+zillow.long$r_0i <- rep(m.ana.re[,1], each=26)
+zillow.long$r_1i <- rep(m.ana.re[,2], each=26)
 zillow.long$r_1iXt <- zillow.long$r_1i * zillow.long$month
 zillow.long$e_ti <- (zillow.long$e_tot - zillow.long$r_0i - zillow.long$r_1iXt)
 
@@ -73,14 +78,14 @@ g.ex <- ggplot(zillow.ex.metros,
     geom_smooth(method="lm",se=FALSE,size=.5) +
     g.pred
 g.ex
-ggsave("images/0105_randominterceptsslopes_example.png",
+ggsave("../images/0105_randominterceptsslopes_example.png",
        plot=g.ex,height=2.5,width=4,units="in")
 
 (ex.tbl <- zillow.ex.metros[zillow.ex.metros$month==0,c("RegionName","r_0i","r_1i")])
 
 ## Ignore Below (used for writing values to my lecture notes)
 m.ana.fe <- fixef(m.ana)
-f <- file("../lecture/_0105-analysis-estimates.tex")
+f <- file("../../lecture/_0105-analysis-estimates.tex")
 corrcoef <- attr(VarCorr(m.ana)$RegionID, "correlation")
 writeLines(c(
     paste0("\\newcommand{\\intercept}{",round(m.ana.fe[1],3),"}"),

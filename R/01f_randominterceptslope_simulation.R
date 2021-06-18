@@ -4,11 +4,11 @@
 ##              analyzes that data
 ## Author: Michael Bader
 
-rm(list=ls())
 source('_functions.R')
-library(lme4)
-library(ggplot2)
-library(MASS)
+library(tidyverse) 
+library(lme4)      ## Used to estimate growth models
+library(MASS)      ## This library provides a method to draw from a multivariate 
+                   ## normal distribution
 
 #### SIMULATION EXAMPLE: RANDOM INTERCEPTS & SLOPES
 ## PLAN THE POPULATION
@@ -16,12 +16,12 @@ month <- c(0:23)
 N  <- 150
 N_t <- length(month)
 t  <- rep(month,N)
-i  <- rep(c(1:N),each=N_t)
+i  <- as.factor(rep(c(1:N),each=N_t))
 
 gamma_00 <- log(117)
 gamma_10 <- 0.005
 sigma_ti <- 0.002
-tau_00   <- 0.10^2  ## Note that t_00, tau_11, and t_01 represent
+tau_00   <- 0.10^2   ## Note that t_00, tau_11, and t_01 represent
 tau_11   <- 0.005^2  ## *variances/covariances* not standard deviations
 tau_01   <- 0
 Tau   <- matrix(c(tau_00,tau_01,tau_01,tau_11),nrow=2) 
@@ -35,7 +35,7 @@ beta_1i <- gamma_10 + tau[,2]
 
 ## Create individual change trajectories
 lnvalue_ti <- rep(beta_0i,each=N_t) + rep(beta_1i,each=N_t)*t + rnorm(N*N_t,0,sigma_ti)
-d.sim <- data.frame(i,t,lnvalue_ti)
+d.sim <- tibble(i,t,lnvalue_ti)
 head(d.sim,30)
 
 ## DESCRIBE THE DATA
@@ -44,7 +44,7 @@ g.sim
 
 
 ## Show a random sample of trajectories to see individual lines
-g.samp <- ggplot(d.sim[d.sim$i%in%sample(i,20),],
+g.samp <- ggplot(filter(d.sim, i %in% sample(levels(i), 40)),
                  aes(x=t,y=lnvalue_ti,group=i)) + geom_line()
 g.samp
 
@@ -73,7 +73,7 @@ d.sim$r_1i <- ranef(m.sim)$i[,2][d.sim$i]
 d.sim$r_1iXt <- predict(m.sim,re.form=~(0+t|i),random.only=TRUE)
 d.sim$e_ti <- (d.sim$e_tot - d.sim$r_0i - d.sim$r_1iXt)
 
-
+## Draw 5 example trends and show how they relate to the predicted trend
 i_ex <- sample(unique(d.sim$i), 5)
 d.sim$i <- factor(d.sim$i)
 g.ex <- ggplot(d.sim[d.sim$i%in%i_ex,],aes(x=t,y=lnvalue_ti,group=i,linetype=i)) +

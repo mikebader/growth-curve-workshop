@@ -6,6 +6,7 @@
 rm(list=ls())
 source("_functions.R")
 library(ggplot2)
+library(tidyverse)
 current_year <- 2020
 
 ## GATHER DATA
@@ -25,16 +26,20 @@ nyc <- zillow[zillow$RegionName=="New York, NY", keep_vars]
 nyc
 
 ## Uh oh! We need to make the data "long" in order to analyze it
-nyc.long <- reshape(data=nyc,
-                       direction="long",
-                       varying=grep("val",names(nyc)),
-                       v.names = "value_t",
-                       timevar = "month",
-                       idvar = "RegionID"
-)
-nyc.long
-nyc.long$month <- nyc.long$month - 1
-nyc.long$y_t <- log(nyc.long$value_t)
+nyc.long <- nyc %>%
+    pivot_longer(
+        cols         = starts_with('val'),
+        names_to     = "yyyymm",
+        names_prefix = "val\\.",
+        values_to    = "value_t"
+    ) 
+
+nyc.long <- nyc.long %>%
+    mutate(
+        month = 0:(n() - 1),
+        y_t = log(value_t)
+        
+    )
 
 ## DESCRIBE DATA
 time_plt <- ggplot(nyc.long, aes(x=month,y=y_t)) +
@@ -45,9 +50,12 @@ time_plt
 ## ANALYZE DATA
 m.nyc <- lm(y_t ~ month,data=nyc.long)
 summary(m.nyc)
-nyc.long$yhat_t <- predict(m.nyc)
 
-nyc.long$e_t <- nyc.long$y_t - nyc.long$yhat_t
+nyc.long <- nyc.long %>%
+    mutate(
+        yhat_t = predict(m.nyc),
+        e_t = y_t - yhat_t
+    )
 
 ## INTERPRET DATA
 (

@@ -4,16 +4,15 @@
 ##              that data
 ## Author: Michael Bader
 
-rm(list=ls())
 source("_functions.R")
-library(ggplot2) # This loads a library that makes prettier plots than standard R
+library(tidyverse)
 
 ## PLAN POPULATION
 month <- c(0:12)
 N <- 150
 N_t <- length(month)
 t <- rep(month, N)
-i <- as.factor(rep(c(1:N), each=N_t))
+i <- as.factor(rep(c(1:N), each=N_t)) ## creates an indicator for each metro area
 
 sigma_it <- 0.002
 tau_0i <- 0.10
@@ -29,7 +28,7 @@ d.sim <- data.frame(i,t,lnvalue_it)
 g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_it,group=i)) + geom_line()
 g.sim
 
-## ANALYZE DATA
+## PREDICT DATA
 m.sim.i <- by(d.sim,i,function(d) lm(lnvalue_it~t,data=d))
 m.sim.i <- data.frame(t(sapply(m.sim.i,coef)))
 names(m.sim.i) <- c("beta_0","beta_1")
@@ -39,8 +38,8 @@ gamma_00 <- mean(m.sim.i$beta_0)
 gamma_01 <- mean(m.sim.i$beta_1)
 round(c(gamma_00,gamma_01),4)
 
-m.sim.i$r_i <- m.sim.i$beta_0 - gamma_00
-sapply(list(mean=mean(m.sim.i$r_i),sd=sd(m.sim.i$r_i)),round,4)
+m.sim.i$rho_i <- m.sim.i$beta_0 - gamma_00
+sapply(list(mean=mean(m.sim.i$rho_i),sd=sd(m.sim.i$rho_i)),round,4)
 
 
 m.sim.i$i <- rownames(m.sim.i)
