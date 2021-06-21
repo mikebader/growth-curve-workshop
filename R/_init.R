@@ -2,17 +2,17 @@
 ## Description: This file downloads and creates datasets for use in workshop
 ## Author: Michael Bader
 
-wd <- '/Users/bader/work/Teaching/Workshops/modeling-change/materials/R/' ## Paste the path to the class directory you downloaded in the quotes
+wd <- '' ## Paste the path to the class directory you downloaded in the quotes
 init <- function(wd) {
     library(tidyverse)
-    
+
     # rm(list=ls())
 
     ## Set path to working directory below
-    # if(wd==''){
-    #     stop("Must define working directory path in _init.R",call.=FALSE)
-    # }
-    # setwd(wd)
+    if(wd==''){
+        stop("Must define working directory path in _init.R",call.=FALSE)
+    }
+    setwd(wd)
     if(!dir.exists("../data")){
         dir.create("../data")
     }
@@ -50,7 +50,7 @@ init <- function(wd) {
             month.abbr = month.abb[as.numeric(substr(yyyymm, 5, 6))],
         ) %>%
         ungroup()
-    
+
     ## Save data from March 2018 to March 2020
     zillow.long.all <- zillow.long
     mnum <- zillow.long %>%
@@ -62,14 +62,15 @@ init <- function(wd) {
 
     ## Save long-format Zillow data
     save(zillow.long, zillow.long.all, file="../data/zillow_long.RData")
-    
+
     ## GATHER DC NEIGHBORHOOD COMPOSITION DATA
-    dc_fname <- "../data/nhgis0084_csv/nhgis0084_ts_geog2010_tract.csv"
-    if(!file.exists(dc_fname)){print("Need to get DC data")}
-    else{fname = dc_fname}
-    
+    fname <- "../data/nhgis0084_csv/nhgis0084_ts_geog2010_tract2.csv"
+    if(!file.exists(fname)){
+        fname = "https://raw.githubusercontent.com/mikebader/growth-curve-workshop/master/Data/nhgis0084_csv/nhgis0084_ts_geog2010_tract.csv"
+    }
+
     trts <- read_csv(fname) 
-    
+
     dcpop <- filter(trts, STATEA=="11") %>%
         group_by(TRACTA) %>%
         mutate(
@@ -84,8 +85,8 @@ init <- function(wd) {
         arrange(i, t) %>%
         select(nhd, year, i, t, pnhw)
     save(dcpop, file="../data/dc-nhw-population.Rdata")
-    
-    
+
+
     ## GATHER AND FORMAT BLS MONTHLY UNEMPLOYMENT DATA
     ## Get data on the unemployment rate by metropolitan area from the 
     ## Bureau of Labor Statistics
@@ -108,6 +109,3 @@ init <- function(wd) {
     # write.csv(bls, '../data/bls.csv')
 }
 init(wd)
-
-
-
