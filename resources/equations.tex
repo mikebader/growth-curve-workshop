@@ -1,0 +1,84 @@
+\documentclass{memoir}
+
+\usepackage{rotating}
+\usepackage{amsmath,amssymb}
+\usepackage[top=1in, bottom=1in]{geometry}
+
+\setcounter{table}{0}
+\renewcommand{\thetable}{\arabic{table}}
+
+\begin{document}
+\thispagestyle{empty}
+
+\begin{sidewaystable*}
+\centering
+\caption{List of growth model equations, error distributions, and parameters}
+\small
+\begin{tabular}{p{1.5in}rrclll}
+\toprule
+& \multicolumn{4}{c}{\textbf{Equation}} & & \\ 
+& & \textit{Deterministic} && \textit{Stochastic} & \textbf{Error Distribution} & \textbf{Parameters} \\\toprule
+
+\textbf{Mean} & 
+    $y_{t} = $&
+    $\overline{y} $&$+$&
+    $\epsilon_{t}$ &
+    $\begin{array}{l}\epsilon_{t} \sim N(0, \sigma^2)\end{array}$ &
+    $\{\overline{y}, \sigma\}$ \\\midrule
+
+\textbf{Linear Change Model} & 
+    $y_t = $&
+    $\beta_0 + \beta_1(\text{time})_t $&$+$&
+    $\epsilon_{t}$ &
+    $\begin{array}{l}\epsilon_{t} \sim N(0, \sigma^2)\end{array}$ &
+    $\{\beta_0, \beta_1, \sigma\}$ \\\midrule
+
+\raggedright\textbf{``Fixed-Effects'' Model} (see notes) & 
+    $y_{ti} =$ &
+    $\beta_0 + \beta_1(\text{time})_{ti} + \delta_i$ &$+$& 
+    $\epsilon_{t}$ &
+    $\begin{array}{l}\epsilon_{t} \sim N(0, \sigma^2)\end{array}$ &
+    $\{\beta_0, \beta_1, \delta_i, \sigma\}$ \\\midrule
+
+\raggedright\textbf{Random Intercepts Model} & 
+    $y_{ti} =$&
+    $\gamma_{00} + \gamma_{10}(\text{time})_{ti} $&$+$&
+    $\rho_{0i} + \epsilon_{ti}$ &
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \rho_{0i} \sim N(0, \tau_{00})\end{array}$ &
+    $\{\gamma_{00}, \gamma_{10}, \tau_{00}, \sigma\}$ \\\midrule
+
+\raggedright\textbf{Random Slopes Model} &
+    $y_{ti} =$&
+    $\gamma_{00} + \gamma_{10}(\text{time})_{ti} $&$+$&
+    $\rho_{1i}(\text{time})_{t} + \epsilon_{ti}$ &
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \rho_{1i} \sim N(0, \tau_{11})\end{array}$ &
+    $\{\gamma_{00}, \gamma_{10}, \tau_{11}, \sigma\}$ \\\midrule
+
+\raggedright\textbf{Random Intercepts and Slopes Model} & 
+    $y_{ti} =$&
+    $\gamma_{00} + \gamma_{10}(\text{time})_{ti} $&$+$&
+    $\rho_{0i}  + \rho_{1i}(\text{time})_{t} + \epsilon_{ti}$ &
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{\rho} \sim MVN\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\end{array}$ &
+    $\{\gamma_{00}, \gamma_{10}, \tau_{00}, \tau_{11}, \tau_{10}, \sigma\}$ \\\midrule
+
+\raggedright\textbf{Latent Class Growth Analysis (LCGA) Model} (see notes)&
+    $y_{ti|c=k} =$&
+    $\gamma_{0k} + \gamma_{1k}(\text{time})_{ti}$ &+&
+    $\epsilon_{ti}, \pi_{i(c=k)}$ & 
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \pi_{i(c=k)} \sim \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}\end{array}$ &
+    \multicolumn{1}{l}{\parbox[c]{1.75in}{\raggedright$\{\sigma\}$ and \\ $\{\gamma_{0k}, \gamma_{1k}, \pi_{i(c=k)}\}$ for each $k$}}\\\midrule
+
+\raggedright\textbf{Growth Mixture Model}&
+    $y_{ti|c=k} =$&
+    $\gamma_{0k} + \gamma_{1k}(\text{time})_{ti}$ &+&
+    $\rho_{0i}  + \rho_{1i}(\text{time})_{t} + \epsilon_{ti}, \pi_{i(c=k)}$ & 
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{\rho} \sim MVN\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\\ \pi_{i(c=k)} \sim \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}\end{array}$ &
+    \multicolumn{1}{l}{\parbox[c]{1.75in}{\raggedright$\{\sigma\}$ and \\ $\{\gamma_{0k}, \gamma_{1k}, \tau_{00}, \tau_{11}, \tau_{01}, \pi_{i(c=k)}\}$ for each $k$}}\\\bottomrule
+
+
+\multicolumn{7}{p{\textwidth}}{\footnotesize
+    \emph{Notes:} The ``Fixed-Effects'' Model refers to the econometric description of a model that accounts for variation across higher-level entities by including an indicator for $N{-}1$ entities represented in the equation by $\delta_i$ (therefore, $\delta_i$ has $N{-}1$ parameters); it \emph{does not} refer to the ``fixed'' portion (i.e., deterministic component) of the growth models above. In the Latent Class Growth Analysis Model and Growth Mixture Model, $\eta_{ik}$ represents the log-odds of membership in class $k$ being drawn using the convention that $\eta_{iK}$, the log-odds of the reference category $K$, equal 0.
+}
+\end{tabular}
+\end{sidewaystable*}
+\end{document}
