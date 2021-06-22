@@ -5,6 +5,10 @@
 ## Author: Michael Bader
 
 source("_functions.R")
+estimate_grid = TRUE  ## Set to FALSE after the first time you run this code
+                      ## (the code below saves a file with the model estimates
+                      ## and allows you to load the estimates later without 
+                      ## the need to wait for the estimates to converge)
 library(tidyverse)
 library(lcmm)
 
@@ -36,6 +40,8 @@ summarytable(m2, m3, m4,
 m5 <- hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng = 5, B = random(m1))
 summarytable(m2, m3, m4, m5,
              which = fitnames)
+
+if(estimate_grid=FALSE) {
 m5g <- gridsearch(hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng = 5), 
     rep=100, maxiter=30, minit=m1)
 summarytable(m2, m3, m4, m5, m5g,
@@ -51,13 +57,30 @@ m7g <- gridsearch(hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng =
 summarytable(m2, m3, m4, m5, m5g, m6g, m7g,
              which = fitnames)
 
+m8g <- gridsearch(hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng = 8), 
+                  rep=100, maxiter=30, minit=m1)
+summarytable(m2, m3, m4, m5, m5g, m6g, m7g, m8g,
+             which = fitnames[1:7])
 
+m9g <- gridsearch(hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng = 9), 
+                  rep=100, maxiter=30, minit=m1)
+save(m5g, m6g, m7g, m8g, m9g, file = "../data/lcga-grid-estimates.Rdata")
+} else { 
+    load("../data/lcga-grid-estimates.Rdata")
+} #end if estimate_grid
+
+## Summarize model fit parameters for classes from K=2 to K=9
+summarytable(m2, m3, m4, m5, m5g, m6g, m7g, m8g, m9g,
+             which = fitnames[1:7])
+## Summarize the probability of class membership for models with K=2 to K=9
+summarytable(m2, m3, m4, m5, m5g, m6g, m7g, m8g, m9g,
+             which = fitnames[8])
 
 ## Summarize the best-fitting model
-summary(m6g)
+m <- m8g
+summary(m)
 
 ## Plot predicted values of classes
-m <- m6g
 mp <- predictY(m, data.frame(t=0:2), var.time = 't')
 pr <- as_tibble(mp$pred) %>% 
     mutate(t=as.vector(mp$times[,1])) %>%
