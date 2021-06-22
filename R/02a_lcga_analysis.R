@@ -41,7 +41,7 @@ m5 <- hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng = 5, B = rand
 summarytable(m2, m3, m4, m5,
              which = fitnames)
 
-if(isFALSE(estimate_grid)) {
+if(isTRUE(estimate_grid)) {
 m5g <- gridsearch(hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng = 5), 
     rep=100, maxiter=30, minit=m1)
 summarytable(m2, m3, m4, m5, m5g,
