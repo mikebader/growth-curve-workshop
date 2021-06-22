@@ -46,7 +46,12 @@ head(d_sim)
 
 p <- ggplot(d_sim, aes(x=t, y=pwht, group=nhd_i)) + 
     geom_line(size=.01) +
-    scale_y_continuous(limits=c(0,100))
+    scale_y_continuous(limits=c(0,100)) +
+    labs(
+        title = "175 simulated neighborhoods",
+        x = "Decade",
+        y = "Percent non-Hispanic white"
+    )
 p
 
 m0 <- lmer(pwht ~ t + (1 + t | nhd_i), data=d_sim)
@@ -54,7 +59,7 @@ huxreg(m0, coefs=c("Intercept"="(Intercept)", "Decade" = "t"))
 
 m0_fe <- lme4::fixef(m0)
 p + geom_abline(
-    intercept = m0_fe[1], slope = m0_fe[2], 
+    intercept = m0_fe[1], slope = m0_fe[2],
     color="orange", size=1.2
     )
 
@@ -62,15 +67,25 @@ p + geom_abline(
 m0_re <- lme4::ranef(m0)
 names(m0_re$nhd_i) <- c("rho0i", "rho1i")
 ggplot(m0_re$nhd_i, aes(x=rho0i)) +
-    geom_histogram(bins=100)
+    geom_histogram(bins=100) +
+    labs(
+        title = "Distribution of tract-specific intercept errors (rho_0i)",
+        x = expression(rho['0i'], parse=TRUE)
+    )
 ## Plot distribution of neighborhood-specific slope errors
 ggplot(m0_re$nhd_i, aes(x=rho1i)) +
-    geom_histogram(bins=100)
+    geom_histogram(bins=100) +
+    labs(
+        title = "Distribution of tract-specific slope errors (rho_1i)",
+        x = expression(rho['1i'], parse=TRUE)
+    )
+
 ## Plot relationship between neighborhood-specific intercept & slope errors
 ggplot(m0_re$nhd, aes(x=rho0i, y=rho1i)) +
     geom_density_2d() +
     geom_point(size=.5) +
     labs(
+        title = "Relationship between intercept and slope errors",
         x = expression(rho['0i'], parse=TRUE),
         y = expression(rho['1i'], parse=TRUE)
     )
@@ -111,7 +126,11 @@ pr <- as_tibble(m3p$pred) %>%
     mutate(t=as.vector(m3p$times[,1])) %>%
     pivot_longer(cols=starts_with("Ypred"), names_to="class", values_to="pwht")
 
-p + geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class))
+p + geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class)) +
+    labs(
+        title = "Estimated trajectories for classes of LGCA",
+        subtitle = "175 simulated tracts"
+    )
 
 ## Calculate probabilities for each class
 ## The estimates are stored in the attribute `best` of the model object
