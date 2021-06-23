@@ -30,7 +30,12 @@ head(d.sim,N_t*2) ## Observe data for two "metros"
 
 ## DESCRIBE OUR POPULATION
 g.sim <- ggplot(d.sim,
-                aes(x=t,y=lnvalue_ti,group=i)) + geom_line()
+                aes(x=t,y=lnvalue_ti,group=i)) + geom_line() +
+    labs(
+        title = "Simulated data with random slopes",
+        y = "Outcome", 
+        x = "Time"
+    )
 g.sim
 
 ## Take a sample of all trends to see more clearly how individual
@@ -63,6 +68,8 @@ g.sim.pred  <- g.sim + geom_abline(
     slope=m.sim.fe[["t"]],col="orange",size=1.2
 )
 g.sim.pred
+ggsave("../images/sims/random_slopes.pdf", plot = g.sim.pred, 
+       width = 9, height = 6, units =)
 
 ## Record predicted values and total error
 d.sim$lnvalue_ti_hat <- predict(m.sim,re.form=NA) ## Predicted value

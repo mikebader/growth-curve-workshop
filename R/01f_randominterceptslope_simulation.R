@@ -45,7 +45,14 @@ d.sim <- tibble(i,t,lnvalue_ti)
 print(d.sim, n = 30)
 
 ## DESCRIBE THE DATA
-g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_ti,group=i)) + geom_line()
+## List values for each parameter
+g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_ti,group=i)) + 
+    geom_line() +
+    labs(
+        title = "Simulated data with random intercepts and slopes",
+        x = "Time",
+        y = "Outcome"
+    )
 g.sim
 
 ## Show a random sample of trajectories to see individual lines
@@ -65,11 +72,11 @@ var(m.sim.re)  ## Calculate the variance-covariance of random effects
 Tau            ## Compare to `Tau` above
 
 ## Plot predicted values from the fixed effects estimates of the model
-g.pred <- g.sim + 
-    geom_abline(intercept=m.sim.fe[1],slope=m.sim.fe[2],
-                color="orange",size=1.5) +
-    scale_x_continuous(breaks=seq(0,23,1),labels=rep(month.abb,3)[3:26])
-g.pred
+g.pred <- geom_abline(intercept=m.sim.fe[1],slope=m.sim.fe[2],
+                color="orange",size=1.5) 
+g.sim + g.pred
+ggsave("../images/sims/random_intercepts_slopes.pdf", plot = g.sim + g.pred,
+       width = 9, height = 6, units = 'in')
 
 ## Record predicted values and total error
 d.sim$lnvalue_ti_hat <- predict(m.sim,re.form=NA) ## Predicted values

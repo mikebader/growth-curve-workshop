@@ -25,7 +25,12 @@ beta_0i <- rep(beta_0,each=N_t)
 lnvalue_it <- beta_0i + beta_1*t + rnorm(N*N_t,0,sigma_it)
 d.sim <- data.frame(i,t,lnvalue_it)
 
-g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_it,group=i)) + geom_line()
+g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_it,group=i)) + geom_line() +
+    labs(
+        title = "Simulated data with random intercepts",
+        y = "Outcome", 
+        x = "Time"
+    )
 g.sim
 
 ## PREDICT DATA
@@ -45,7 +50,7 @@ sapply(list(mean=mean(m.sim.i$rho_i),sd=sd(m.sim.i$rho_i)),round,4)
 m.sim.i$i <- rownames(m.sim.i)
 d.sim <- merge(d.sim,m.sim.i,by="i")
 d.sim$lnvalue_it_hat <- gamma_00 + gamma_01*t
-d.sim$e_it <- d.sim$lnvalue_it - d.sim$lnvalue_it_hat - d.sim$r_i
+d.sim$e_it <- d.sim$lnvalue_it - d.sim$lnvalue_it_hat - d.sim$rho_i
 d.sim[i%in%c(1:3)&t%in%c(0:4),]
 
 sapply(list(mean=mean(d.sim$e_it),sd=sd(d.sim$e_it)),round,4)
@@ -61,3 +66,5 @@ g.sim.pred  <- g.sim + geom_abline(
                         slope=m.sim.fe[["t"]],col="orange",size=1.2
                         )
 g.sim.pred
+ggsave("../images/sims/random_intercepts.pdf", plot = g.sim.pred,
+       width = 9, height = 6, units = "in")

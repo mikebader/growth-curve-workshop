@@ -23,17 +23,17 @@ t <- 0:2
 N_wht <- 100
 beta0_wht <-  90
 beta1_wht <-   0
-wht <- beta0_wht + beta1_wht*rep(t, N_wht) + runif(N_wht, max=3)
+wht <- beta0_wht + beta1_wht*rep(t, N_wht) + runif(N_wht, min=-3, max=3)
 
 N_blk <- 50
 beta0_blk <-  10
 beta1_blk <-   0
-blk <- beta0_blk + beta1_blk*rep(t, N_blk) + runif(N_blk, max=3)
+blk <- beta0_blk + beta1_blk*rep(t, N_blk) + runif(N_blk, min=-3, max=3)
 
 N_chg <- 25
 beta0_chg <-  90
 beta1_chg <- -40
-chg <- beta0_chg + beta1_chg*rep(t, N_chg) + runif(N_chg, max=3)
+chg <- beta0_chg + beta1_chg*rep(t, N_chg) + runif(N_chg, min=-3, max=3)
 
 N <- sum(N_wht, N_blk, N_chg)
 d_sim <- tibble(
@@ -45,7 +45,7 @@ d_sim <- tibble(
 head(d_sim)
 
 p <- ggplot(d_sim, aes(x=t, y=pwht, group=nhd_i)) + 
-    geom_line(size=.01) +
+    geom_line(size=.1) +
     scale_y_continuous(limits=c(0,100)) +
     labs(
         title = "175 simulated neighborhoods",
@@ -126,11 +126,23 @@ pr <- as_tibble(m3p$pred) %>%
     mutate(t=as.vector(m3p$times[,1])) %>%
     pivot_longer(cols=starts_with("Ypred"), names_to="class", values_to="pwht")
 
-p + geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class)) +
+p + geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
     labs(
         title = "Estimated trajectories for classes of LGCA",
         subtitle = "175 simulated tracts"
     )
+
+g.pred <- p + 
+    geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
+    labs(
+        title = "Simulated data following a latent class growth distribution",
+        x = "Time",
+        y = "Outcome"
+    ) +
+    theme(legend.position = "bottom")
+g.pred
+ggsave("../images/sims/lcga.pdf", plot = g.pred, 
+       height = 6, width = 9, units = "in")
 
 ## Calculate probabilities for each class
 ## The estimates are stored in the attribute `best` of the model object

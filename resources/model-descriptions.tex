@@ -1,0 +1,242 @@
+\documentclass[10pt, landscape, article]{memoir}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{minted}
+\usepackage{graphicx}
+\graphicspath{ {../images/sims/} }
+
+%% CONVENIENCE FUNCTIONS
+%% Commands for equation parts
+\newcommand{\timevar}{(\text{month})}
+\newcommand{\outcome}[1]{\underbrace{#1}_{\text{outcome}}}
+\newcommand{\deterministic}[1]{\underbrace{#1}_{\text{deterministic}}}
+\newcommand{\stochastic}[1]{\underbrace{#1}_{\text{stochastic}}}
+
+%% Create environment to hold code
+\newenvironment{democode}{%
+    \scriptsize%
+    \VerbatimEnvironment\begin{minted}{R}%
+    }{%
+    \end{minted}
+    \normalsize%
+    }
+
+%% ENVIRONMENTS FOR SECTION OF PAGE
+%% Description of the model
+\newenvironment{desc}{
+    \begin{minipage}[t][.6\textheight][t]{.9\textwidth}
+    \setlength{\parskip}{.5\baselineskip}
+    \textbf{\large Description}\\\raggedright
+}{
+    \end{minipage}
+}
+%% Equation
+\newenvironment{eqn}{
+    \begin{minipage}[t][.39\textheight][t]{\textwidth}
+    \textbf{\large Equation}\\
+}{
+    \end{minipage}
+}
+%% Example data
+\newcommand{\datafig}[1]{
+    \begin{minipage}[t][.6\textheight][t]{\textwidth}%
+    \textbf{\large Descriptive plot}\\
+    \includegraphics[width=\textwidth]{#1}%
+    \end{minipage}
+}
+%% Example files
+\newenvironment{files}{
+    \begin{minipage}[t][.2\textheight][t]{\textwidth}
+    \textbf{\large Example files}\\
+}{
+    \end{minipage}
+}
+
+%% STYLES
+\makeevenhead{plain}{}{}{}
+\makeoddhead{plain}{}{}{}
+\makeevenfoot{plain}{}{}{\thepage}
+\makeoddfoot{plain}{}{}{\thepage}
+\setsecnumdepth{none}
+\maxsecnumdepth{none}
+\setcounter{table}{0}
+\renewcommand{\thetable}{}
+
+
+\begin{document}
+% \pagestyle{plain}
+% \tableofcontents*
+
+
+%% EQUATIONS
+\chapter{Summary of Model Forms}
+\label{equations}
+\rule[\baselineskip]{\textwidth}{3pt}
+\input{equations.tex}
+\vfill
+\newpage
+
+
+%% TEMPLATE
+% \chapter{Model Name}
+% \label{chp:label}
+% \rule[\baselineskip]{\textwidth}{3pt}
+% \begin{minipage}[t][.9\textheight][t]{.4\textwidth}
+% \begin{desc}
+% Description goes here
+% \end{desc}
+% \begin{files}
+% file1\\file2
+% \end{files}
+% \end{minipage} % End left side
+% \begin{minipage}[t][.9\textheight][t]{.6\textwidth}
+% \datafig{0104_twotrends_zoomdetail.pdf}
+% \begin{eqn}
+% $y = mx + b$
+% \end{eqn}
+% \end{minipage}
+% \newpage
+
+%% LINEAR CHANGE MODEL
+\chapter{Linear Change Model}
+\label{linear}
+\rule[\baselineskip]{\textwidth}{3pt}
+\begin{minipage}[t][.9\textheight][t]{.4\textwidth}
+\begin{desc}
+The linear change model provides the basis for all other models. It measures a linear trend over time for a single entity (e.g., participant), accounting for the random variation that occurs at each point in time. The linear change model can be generalized by adding additional parameters of time to account for polynomial (e.g., squared or cubic) patterns or non-parametric patterns (e.g., splines). 
+
+The model assumes that the errors at every time $t$, $\sigma_t$ are normally distributed around a mean of zero with variance $\sigma^2$.
+\end{desc}
+\begin{files}
+01b\_lineartrend\_simulation.R\\01b\_lineartrend\_analysis.R
+\end{files}
+\end{minipage} % End left side
+\begin{minipage}[t][.9\textheight][t]{.6\textwidth}
+\datafig{linear.pdf}
+\begin{eqn}
+$\begin{array}{rl}
+\outcome{y_t} = & \beta_0 + \beta_1(\text{time})_t + \epsilon_t \\
+e_t \sim & N(0, \sigma^2)
+\end{array}$
+\end{eqn}
+\end{minipage}
+\newpage
+
+
+%% RANDOM INTERCEPTS
+\chapter{Random Intercepts Model}
+\label{intercepts}
+\rule[\baselineskip]{\textwidth}{3pt}
+\begin{minipage}[t][.9\textheight][t]{.4\textwidth}
+\begin{desc}
+Use the random intercepts model when you believe that entities (e.g., participants) start at different values of the outcome from one another, but change at similar rates to one another. 
+
+Assumes that the trajectories that entities follow vary according to a single trend where the errors of the intercepts ($\rho_{0i}$) has a mean of zero and are \emph{continuously} distributed according to a normal distribution with a mean of zero and variance $\tau_{00}$.
+\end{desc}
+\begin{files}
+01e\_randomintercepts\_simulation.R\\01e\_randomintercepts\_analysis.R
+\end{files}
+\end{minipage} % End left side
+\begin{minipage}[t][.9\textheight][t]{.6\textwidth}
+\datafig{random_intercepts.pdf}
+\begin{eqn}
+$\begin{array}{rl}
+\outcome{y_{ti}} = & 
+\deterministic{\gamma_{00} + \gamma_{10}(\text{time})_{ti}} + 
+\stochastic{\rho_{0i} + \epsilon_{ti}} \\
+&\\
+\epsilon_{ti} \sim & N(0, \sigma^2) \\
+\rho_{0i} \sim & N(0, \tau_{00})
+\end{array}$
+\end{eqn}
+\end{minipage}
+
+%% RANDOM SLOPES MODEL
+\chapter{Random Slopes Model}
+\label{slopes}
+\rule[\baselineskip]{\textwidth}{3pt}
+\begin{minipage}[t][.9\textheight][t]{.4\textwidth}
+\begin{desc}
+Use the random slopes model when you believe that entities (e.g., participants) start at the same (or very similar) values of the outcome and then change at different rates from one another. 
+
+The model assumes that the trajectories that entities follow vary according to a single trend, except that the slopes, $\rho_{1i}$, are \emph{continuously} distributed according to a normal distribution with a mean of zero and variance $\tau_{11}$.
+\end{desc}
+\begin{files}
+01e\_twocityslope\_analysis.R (shows example with two metros)\\
+01e\_randomslopes\_simulation.R
+\end{files}
+\end{minipage} % End left side
+\begin{minipage}[t][.9\textheight][t]{.6\textwidth}
+\datafig{random_slopes.pdf}
+\begin{eqn}
+$\begin{array}{rl}
+\outcome{y_{ti}} = & 
+\deterministic{\gamma_{00} + \gamma_{10}(\text{time})_{ti}} + 
+\stochastic{\rho_{1i}(\text{time})_{t} + \epsilon_{ti}} \\
+&\\
+\epsilon_{ti} \sim & N(0, \sigma^2) \\
+\rho_{1i} \sim & N(0, \tau_{11})
+\end{array}$
+\end{eqn}
+\end{minipage}
+\newpage
+
+%% RANDOM INTERCEPTS AND SLOPES
+\chapter{Random Intercepts and Slopes Model}
+\label{full}
+\rule[\baselineskip]{\textwidth}{3pt}
+\begin{minipage}[t][.9\textheight][t]{.4\textwidth}
+\begin{desc}
+Use the random slopes and intercepts model when you believe that entities (e.g., participants) start at different values of the outcome from one another \emph{and} change at different rates from one another. 
+
+Assumes that the trajectories that entities follow vary according to a single trend where the errors for both intercepts ($\rho_{0i}$) and slopes ($\rho_{1i}$) have means of zero and are distributed \emph{continuously} with a multivariate normal distribution $\mathbf{T}$ that represents the variance\slash covariance matrix of $\rho_{0i}$ and $\rho_{1i}$. 
+\end{desc}
+\begin{files}
+01f\_randominterceptslope\_simulation.R\\01f\_randominterceptslope\_analysis.R
+\end{files}
+\end{minipage} % End left side
+\begin{minipage}[t][.9\textheight][t]{.6\textwidth}
+\datafig{random_intercepts_slopes.pdf}
+\begin{eqn}
+$\begin{array}{rl}
+\outcome{y_{ti}} = & 
+\deterministic{\gamma_{00} + \gamma_{10}(\text{time})_{ti}} + 
+\stochastic{\rho_{0i}  + \rho_{1i}(\text{time})_{t} + \epsilon_{ti}} \\
+&\\
+\epsilon_{ti} \sim & N(0, \sigma^2) \\
+\mathbf{\rho} \sim & \text{MVN}\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)
+\end{array}$
+\end{eqn}
+\end{minipage}
+
+%% LATENT CLASS GROWTH ANALYSIS (LCGA) MODEL
+\chapter{Latent Class Growth Analysis (LCGA) Model}
+\label{lcga}
+\rule[\baselineskip]{\textwidth}{3pt}
+\begin{minipage}[t][.9\textheight][t]{.4\textwidth}
+\begin{desc}
+Use the latent class growth analysis model when you believe that change over time among the population of entities (e.g., participants) can best be described \emph{categorically}. Rather than deviating from a single trend, entities follow one of a discrete number of trajectories.
+
+The model assumes that differences between entities (other than small variations from one time to the next) can best be described as a multinomial logistic distribution where an entity has a probability $\pi_{i(c{=}k)}$ of being in class $c$ where $c$ is one of $K$ different classes and $\sum^K_{k{=}1}\pi_{ik}=1$.
+\end{desc}
+\begin{files}
+02a\_lcga\_simulation.R\\02a\_lcga\_analysis.R
+\end{files}
+\end{minipage} % End left side
+\begin{minipage}[t][.9\textheight][t]{.6\textwidth}
+\datafig{lcga.pdf}
+\begin{eqn}
+$\begin{array}{rl}
+\outcome{y_{ti|c=k}} = & 
+\deterministic{\gamma_{0k} + \gamma_{1k}(\text{time})_{ti}} + 
+\stochastic{\epsilon_{ti}, \pi_{i(c=k)}} \\
+&\\
+\epsilon_{ti} \sim & N(0, \sigma^2) \\
+\pi_{i(c=k)} \sim & \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}
+\end{array}$
+\end{eqn}
+\end{minipage}
+\newpage
+
+\end{document}

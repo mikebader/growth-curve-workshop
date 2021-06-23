@@ -25,9 +25,21 @@ summary(m.nyc.sim)
 betahats <- coef(m.nyc.sim)
 d.nyc.sim$price_t_hat <- predict(m.nyc.sim)
 d.nyc.sim
-ggplot(d.nyc.sim,aes(x=month,y=price_t)) +
-    geom_point(size=.75)+
-    geom_abline(intercept=betahats[1],slope=betahats[2],color="orange") +
+g.sim <- ggplot(d.nyc.sim, aes(x=month, y=price_t)) +
+    geom_point() +
+    labs(
+        title = "Simulated data of a linear trend",
+        x = "Time", 
+        y = "Outcome"
+    )
+
+g.pred <- geom_abline(intercept=betahats[1],slope=betahats[2],color="orange")
+g.sim + g.pred 
+ggsave("../images/sims/linear.pdf", plot=g.sim + g.pred,
+       width = 9, height = 6, units = "in")
+    
+## Add more informative labels
+g.sim + g.pred +
     scale_x_continuous(breaks=seq(0,23,1),labels=rep(month.abb,3)[4:27]) +
     labs(
         y="Logged price",

@@ -1,20 +1,8 @@
-\documentclass{memoir}
-
-\usepackage{rotating}
-\usepackage{amsmath,amssymb}
-\usepackage[top=1in, bottom=1in, left=1in, right=1in, landscape]{geometry}
-
-\setcounter{table}{0}
-\renewcommand{\thetable}{\arabic{table}}
-
-\begin{document}
-\thispagestyle{empty}
-
-\begin{table*}
+\begin{table*}[!h]
 \centering
 \caption{List of growth model equations, error distributions, and parameters}
-\small
-\begin{tabular}{p{1.5in}rrclll}
+\footnotesize
+\begin{tabular}{p{1.1in}rrcllp{1in}}
 \toprule
 & \multicolumn{4}{c}{\textbf{Equation}} & & \\ 
 & & \textit{Deterministic} && \textit{Stochastic} & \textbf{Error Distribution} & \textbf{Parameters} \\\toprule
@@ -58,7 +46,7 @@
     $y_{ti} =$&
     $\gamma_{00} + \gamma_{10}(\text{time})_{ti} $&$+$&
     $\rho_{0i}  + \rho_{1i}(\text{time})_{t} + \epsilon_{ti}$ &
-    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{\rho} \sim MVN\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\end{array}$ &
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{\rho} \sim \text{MVN}\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\end{array}$ &
     $\{\gamma_{00}, \gamma_{10}, \tau_{00}, \tau_{11}, \tau_{10}, \sigma\}$ \\\midrule
 
 \raggedright\textbf{Latent Class Growth Analysis (LCGA) Model} (see notes)&
@@ -72,8 +60,8 @@
     $y_{ti|c=k} =$&
     $\gamma_{0k} + \gamma_{1k}(\text{time})_{ti}$ &+&
     $\rho_{0i}  + \rho_{1i}(\text{time})_{t} + \epsilon_{ti}, \pi_{i(c=k)}$ & 
-    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{\rho} \sim MVN\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\\ \pi_{i(c=k)} \sim \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}\end{array}$ &
-    \multicolumn{1}{l}{\parbox[c]{1.75in}{\raggedright$\{\sigma\}$ and \\ $\{\gamma_{0k}, \gamma_{1k}, \tau_{00}, \tau_{11}, \tau_{01}, \pi_{i(c=k)}\}$ for each $k$}}\\\bottomrule
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{\rho} \sim \text{MVN}\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\\ \pi_{i(c=k)} \sim \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}\end{array}$ &
+    \multicolumn{1}{l}{\parbox[c]{1.75in}{\raggedright$\{\sigma\}$ and \\ \{$\gamma_{0k}$, $\gamma_{1k}$, $\tau_{00}$, $\tau_{11}$, $\tau_{01}$, $\pi_{i(c=k)}$\} for each $k$}}\\\bottomrule
 
 
 \multicolumn{7}{p{\textwidth}}{\footnotesize
@@ -81,4 +69,3 @@
 }
 \end{tabular}
 \end{table*}
-\end{document}
