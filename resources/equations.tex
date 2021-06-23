@@ -2,7 +2,7 @@
 
 \usepackage{rotating}
 \usepackage{amsmath,amssymb}
-\usepackage[top=1in, bottom=1in]{geometry}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in, landscape]{geometry}
 
 \setcounter{table}{0}
 \renewcommand{\thetable}{\arabic{table}}
@@ -10,7 +10,7 @@
 \begin{document}
 \thispagestyle{empty}
 
-\begin{sidewaystable*}
+\begin{table*}
 \centering
 \caption{List of growth model equations, error distributions, and parameters}
 \small
@@ -80,5 +80,5 @@
     \emph{Notes:} The ``Fixed-Effects'' Model refers to the econometric description of a model that accounts for variation across higher-level entities by including an indicator for $N{-}1$ entities represented in the equation by $\delta_i$ (therefore, $\delta_i$ has $N{-}1$ parameters); it \emph{does not} refer to the ``fixed'' portion (i.e., deterministic component) of the growth models above. In the Latent Class Growth Analysis Model and Growth Mixture Model, $\eta_{ik}$ represents the log-odds of membership in class $k$ being drawn using the convention that $\eta_{iK}$, the log-odds of the reference category $K$, equal 0.
 }
 \end{tabular}
-\end{sidewaystable*}
+\end{table*}
 \end{document}
