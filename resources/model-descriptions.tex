@@ -239,4 +239,34 @@ $\begin{array}{rl}
 \end{minipage}
 \newpage
 
+%% GROWTH MIXTURE MODEL
+\chapter{Growth Mixture Model}
+\label{gmm}
+\rule[\baselineskip]{\textwidth}{3pt}
+\begin{minipage}[t][.9\textheight][t]{.4\textwidth}
+\begin{desc}
+Use the growth mixture model when you believe that the change over time among the population of entities (e.g., partipants) can best be described \emph{categorically}, \emph{\textbf{but}} when you also believe that individual trajectories vary around each of the different trajectories. Entities follow one of a discrete number of trajectories, but also vary \emph{continuously} off of the predicted trend. 
+
+The model assumes that differences between entities drawn from a mixture of a multinomial logistic distribution with probability of being in class $c$, $\pi_{i(c{=}k)}$ and a continuous, multivariate normal distribution of intercepts, $\rho_{0i}$, and slopes, $\rho_{1i}$, with a variance\slash covariance $\mathbf{T}$.
+\end{desc}
+\begin{files}
+02b\_gmm\_simulation.R\\02b\_gmm\_analysis.R
+\end{files}
+\end{minipage} % End left side
+\begin{minipage}[t][.9\textheight][t]{.6\textwidth}
+\datafig{gmm.pdf}
+\begin{eqn}
+$\begin{array}{rl}
+\outcome{y_{ti|c=k}} =& 
+\deterministic{\gamma_{0k} + \gamma_{1k}(\text{time})_{ti}} +
+\stochastic{\rho_{0i}  + \rho_{1i}(\text{time})_{t} + \epsilon_{ti}, \pi_{i(c=k)}} \\
+& \\
+\epsilon_{ti} \sim& N(0, \sigma^2) \\ 
+\mathbf{\rho} \sim& \text{MVN}\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\\ 
+\pi_{i(c=k)} \sim& \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}
+\end{array}$
+\end{eqn}
+\end{minipage}
+\newpage
+
 \end{document}
