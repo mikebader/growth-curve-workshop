@@ -5,3 +5,6 @@
 
 images/*
 resources/_minted-models/*
+
+*.docx
+*.xlsx
