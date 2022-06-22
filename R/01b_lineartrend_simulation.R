@@ -35,9 +35,7 @@ g.sim <- ggplot(d.nyc.sim, aes(x=month, y=price_t)) +
 
 g.pred <- geom_abline(intercept=betahats[1],slope=betahats[2],color="orange")
 g.sim + g.pred 
-ggsave("../images/sims/linear.pdf", plot=g.sim + g.pred,
-       width = 9, height = 6, units = "in")
-    
+
 ## Add more informative labels
 g.sim + g.pred +
     scale_x_continuous(breaks=seq(0,23,1),labels=rep(month.abb,3)[4:27]) +
@@ -45,6 +43,9 @@ g.sim + g.pred +
         y="Logged price",
         x="Month"
     )
+ggsave("../images/sims/linear.pdf",
+       width = 9, height = 6, units = "in")
+
 
 d.nyc.sim$e_t <- d.nyc.sim$price_t - d.nyc.sim$price_t_hat
 sapply(list(sum=sum(d.nyc.sim$e_t),sd=sd(d.nyc.sim$e_t)),round,4)

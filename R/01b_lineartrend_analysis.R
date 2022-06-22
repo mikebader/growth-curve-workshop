@@ -44,7 +44,12 @@ nyc.long <- nyc.long %>%
 ## DESCRIBE DATA
 time_plt <- ggplot(nyc.long, aes(x=month,y=y_t)) +
     geom_point() +
-    scale_x_continuous(breaks=seq(0,24,1),labels=rep(month.abb,3)[4:28])
+    scale_x_continuous(breaks=seq(0,24,1),labels=rep(month.abb,3)[3:27]) +
+    labs(
+        title = "Price per square foot in NYC 2018-2020",
+        y = "Logged price",
+        x = "Month"
+    )
 time_plt
 
 ## ANALYZE DATA

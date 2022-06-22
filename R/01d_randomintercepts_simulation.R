@@ -6,16 +6,17 @@
 
 source("_functions.R")
 library(tidyverse)
+library(broom)
 
 ## PLAN POPULATION
 month <- c(0:12)
-N <- 150
+N   <- 150
 N_t <- length(month)
-t <- rep(month, N)
-i <- as.factor(rep(c(1:N), each=N_t)) ## creates an indicator for each metro area
+t   <- rep(month, N)
+i   <- as.factor(rep(c(1:N), each=N_t)) 
 
 sigma_it <- 0.002
-tau_0i <- 0.10
+tau_0i   <- 0.10
 
 beta_0  <- log(100) + rnorm(N,0,tau_0i)
 beta_1  <- 0.005
@@ -34,10 +35,24 @@ g.sim <- ggplot(d.sim,aes(x=t,y=lnvalue_it,group=i)) + geom_line() +
 g.sim
 
 ## PREDICT DATA
-m.sim.i <- by(d.sim,i,function(d) lm(lnvalue_it~t,data=d))
-m.sim.i <- data.frame(t(sapply(m.sim.i,coef)))
-names(m.sim.i) <- c("beta_0","beta_1")
-qplot(m.sim.i$beta_0,bins=12)
+m.sim.i <- d.sim %>%
+    nest_by(i)%>%
+    mutate(mod = list(lm(lnvalue_it ~ t, data = data))) %>%
+    summarize(tidy(mod)) %>%
+    pivot_wider(
+        id_cols = "i", names_from = "term", values_from = "estimate"
+    ) %>%
+    rename(beta_0 = `(Intercept)`, beta_1 = t) %>%
+    ungroup()
+
+ggplot(m.sim.i, aes(x = beta_0)) +
+    geom_histogram(bins=12) +
+    geom_vline(xintercept = mean(m.sim.i$beta_0), size=1, color = "orange") +
+    labs(
+        title = expression("Distribution of "*beta[1]*"s in simulated data"),
+        x = expression(beta[0]),
+        y = "Count"
+    )
 
 gamma_00 <- mean(m.sim.i$beta_0)
 gamma_01 <- mean(m.sim.i$beta_1)
@@ -47,11 +62,9 @@ m.sim.i$rho_i <- m.sim.i$beta_0 - gamma_00
 sapply(list(mean=mean(m.sim.i$rho_i),sd=sd(m.sim.i$rho_i)),round,4)
 
 
-m.sim.i$i <- rownames(m.sim.i)
 d.sim <- merge(d.sim,m.sim.i,by="i")
 d.sim$lnvalue_it_hat <- gamma_00 + gamma_01*t
 d.sim$e_it <- d.sim$lnvalue_it - d.sim$lnvalue_it_hat - d.sim$rho_i
-d.sim[i%in%c(1:3)&t%in%c(0:4),]
 
 sapply(list(mean=mean(d.sim$e_it),sd=sd(d.sim$e_it)),round,4)
 

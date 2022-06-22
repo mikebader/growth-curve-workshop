@@ -29,14 +29,16 @@ g.samp <- ggplot(filter(zillow.long, RegionName %in% sample(RegionName, sampn)),
 g.samp
 
 ## ANALYZE THE DATA
-m.ana <- lmer(lnvalue_ti ~ month + (1 + month | RegionID), data=zillow.long)
+m.ana <- lmer(
+    lnvalue_ti ~ month + (1 + month | RegionID), 
+    data=zillow.long
+)
+summary(m.ana)
 ## Note error, especially the problems with the Hessian matrix, generally that
 ## means that the model has too many parameters
 ##
 ## Estimate the model based on a diagonal Tau matrix (rather than full)
-# m.ana <- lmer(lnvalue_ti ~ month + (1 + month || RegionID), data=zillow.long)
-summary(m.ana)
-
+#m.ana <- lmer(lnvalue_ti ~ month + (1 + month || RegionID), data=zillow.long)
 
 m.ana.re <- ranef(m.ana)$RegionID
 
@@ -85,6 +87,7 @@ ggsave("../images/0105_randominterceptsslopes_example.png",
 
 ## Ignore Below (used for writing values to my lecture notes)
 m.ana.fe <- fixef(m.ana)
+m.ana.var <- var(ranef(m.ana)$RegionID)
 f <- file("../../lecture/_0105-analysis-estimates.tex")
 corrcoef <- attr(VarCorr(m.ana)$RegionID, "correlation")
 writeLines(c(
@@ -93,13 +96,13 @@ writeLines(c(
     paste0("\\newcommand{\\slope}{",round(m.ana.fe[2], 5),"}"),
     paste0("\\newcommand{\\slopepct}{",round(m.ana.fe[2]*100, 3),"}"),
     paste0("\\newcommand{\\slopeexp}{", round(exp(m.ana.fe[2]), 2),"}"),
-    paste0("\\newcommand{\\tauint}{", round(vcov(m.ana)[1,1], 4), "}"),
-    paste0("\\newcommand{\\sqrttauint}{", round(sqrt(vcov(m.ana)[1,1]), 4), "}"),
-    paste0("\\newcommand{\\tauintpct}{", round(sqrt(vcov(m.ana)[1,1])*100, 2), "}"),
-    paste0("\\newcommand{\\tauslp}{", round(vcov(m.ana)[2,2], 11), "}"),
-    paste0("\\newcommand{\\sqrttauslp}{", round(sqrt(vcov(m.ana)[2,2]), 4), "}"),
-    paste0("\\newcommand{\\tauslppct}{", round(sqrt(vcov(m.ana)[2,2])*100, 2), "}"),
-    paste0("\\newcommand{\\taucor}{", round(vcov(m.ana)[1,2], 6), "}"),
+    paste0("\\newcommand{\\tauint}{", round(m.ana.var[1,1], 4), "}"),
+    paste0("\\newcommand{\\sqrttauint}{", round(sqrt(m.ana.var[1,1]), 4), "}"),
+    paste0("\\newcommand{\\tauintpct}{", round(sqrt(m.ana.var[1,1])*100, 2), "}"),
+    paste0("\\newcommand{\\tauslp}{", round(m.ana.var[2,2], 11), "}"),
+    paste0("\\newcommand{\\sqrttauslp}{", round(sqrt(m.ana.var[2,2]), 4), "}"),
+    paste0("\\newcommand{\\tauslppct}{", round(sqrt(m.ana.var[2,2])*100, 2), "}"),
+    paste0("\\newcommand{\\taucor}{", round(m.ana.var[1,2], 6), "}"),
     paste0("\\newcommand{\\sqrttaucor}{", round(corrcoef[1,2], 3), "}"),
     paste0("\\newcommand{\\sigmaparsq}{", round(attr(VarCorr(m.ana), "sc")^2, 6), "}"),
     paste0("\\newcommand{\\sigmapar}{", round(attr(VarCorr(m.ana), "sc"), 4), "}"),

@@ -7,6 +7,7 @@ source("_functions.R")
 library(tidyverse)
 library(lubridate)
 library(lme4)
+library(broom.mixed)
 library(huxtable)
 
 ## GATHER THE DATA
@@ -17,7 +18,8 @@ zillow.long <- zillow.long %>%
     mutate(
         month = month - min(month),
         date = ymd(paste0(yyyymm, "01")),
-        lnvalue_ti = lnvalue_t, ## Helps us remember that value is per month/per metro
+        lnvalue_ti = lnvalue_t, ## Helps us remember that
+                                ## value is per month/per metro
         )
 
 ## DESCRIBE THE DATA
@@ -33,7 +35,10 @@ qplot(d.int$lnvalue_ti, bins=15) +
       )
 
 ## ANALYZE THE DATA
-m.ana <- lmer(lnvalue_ti ~ month + (1 | RegionID),data=zillow.long)
+m.ana <- lmer(
+    lnvalue_ti ~ month + (1 | RegionID),
+    data=zillow.long
+)
 summary(m.ana)
 
 ## INTERPRET THE DATA
