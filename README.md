@@ -30,6 +30,3 @@ Install both according to your operating system.
 To get the files for the course, you may click on the green button that says "Clone or Download" at the top of this page to download a zipped package containing the files in the repository. Unpack the files into a directory on your computer that will be easy to access. Alternatively, you may type the following into a Terminal session (if you don't know what that is, use the button above): 
 
 	git clone https://github.com/mikebader/growth-curve-workshop
-
-Note that the code in most of the R files **will change the working directory**. If you do not desire this behavior, comment-out lines 3 and 4 in the `R/_functions.R` file. 
-

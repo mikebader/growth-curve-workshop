@@ -1,7 +1,12 @@
 #### CONVENIENCE FUNCTIONS ####
-## Set working directory to this file's location
+## Check if working directory is this file's location
 library(here)
-setwd(here())
+if(getwd() != here()) {
+    stop(paste("Working directory is not set to the class R directory.",
+               "Please set the working directory to:", here(),
+               paste0("\n\nCopy the command below and paste it in the console:",
+               "\nsetwd('", here(), "')")))
+}
 
 ## Convenience function to print the mean and standard deviation
 mean.sd <- function(data,x_i,e_i) {
