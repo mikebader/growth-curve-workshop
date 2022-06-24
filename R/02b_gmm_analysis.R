@@ -124,12 +124,12 @@ p_cls
 
 ## Find neighborhoods with some probability of classification across 
 ## multiple classes
-d_mult <- filter(d_res, across(starts_with("prob"), ~ .x<0.99))
+d_mult <- filter(d_res, across(starts_with("prob"), ~ .x<0.95))
 p_mult <- p_base +
     geom_line(data=d_mult, aes(color=class), size=0.25, linetype=2) +
     geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
     labs(
-        subtitle="Dashed lines represent neighborhoods with <99% probability of most likely class membership"
+        subtitle="Dashed lines represent neighborhoods with <95% probability of most likely class membership"
     )
 p_mult
 
@@ -147,7 +147,7 @@ d_mult <- d_mult %>%
 
 d_close <- filter(d_mult, maxprob < 0.6)
 p_hilite <- p_mult +
-    geom_line(data=d_close, aes(color=NULL), color='yellow', alpha=0.7, size=1.2)
+    geom_line(data=d_close, aes(color=NULL), color='yellow', alpha=0.5, size=1.2)
 p_hilite
 
 print(select(d_close, i, pnhw, starts_with("prob")))

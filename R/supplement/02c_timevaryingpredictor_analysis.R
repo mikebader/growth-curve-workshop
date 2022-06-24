@@ -5,7 +5,7 @@
 ## Author: Michael Bader
 
 rm(list=ls())
-source('R/_functions.R')
+source('_functions.R')
 library(ggplot2)
 library(lme4)
 library(cowplot)
@@ -15,7 +15,7 @@ library(cowplot)
 bls <- read.csv('../data/bls.csv')
 
 ## MERGE ZILLOW DATA TO BLS DATA
-load("data/zillow_long.Rdata")
+load("../data/zillow_long.Rdata")
 zillow.long <- zillow.long[,-3]
 xwlk_url <- 'http://files.zillowstatic.com/research/public/CountyCrossWalk_Zillow.csv'
 xwlk <- read.csv(xwlk_url,header=TRUE)[,c('CBSAName','MetroRegionID_Zillow', 'CBSACode')]

@@ -42,6 +42,8 @@ summarytable(m2, m3, m4, m5,
              which = fitnames)
 
 if(isTRUE(estimate_grid)) {
+
+## Add classes sequentially to the model
 m5g <- gridsearch(hlme(pnhw ~ t, subject = "i", mixture = ~t, data = dcpop, ng = 5), 
     rep=100, maxiter=30, minit=m1)
 summarytable(m2, m3, m4, m5, m5g,
@@ -70,12 +72,13 @@ save(m5g, m6g, m7g, m8g, m9g, file = "../data/lcga-grid-estimates.Rdata")
 } #end if estimate_grid
 
 ## Summarize model fit parameters for classes from K=2 to K=9
-summarytable(m2, m3, m4, m5, m5g, m6g, m7g, m8g, m9g,
+fitnames <- c("G", "npm", "loglik", "conv", "AIC", "BIC", "entropy", "%class")
+summarytable(m2, m3, m4, m5g, m6g, m7g, m8g, m9g,
              which = fitnames[1:7])
 ## Summarize the probability of class membership for models with K=2 to K=9
-summarytable(m2, m3, m4, m5, m5g, m6g, m7g, m8g, m9g,
+summarytable(m2, m3, m4, m5g, m6g, m7g, m8g, m9g,
              which = fitnames[8])
-
+summarytable(m8g, which = fitnames[8])
 ## Summarize the best-fitting model
 m <- m8g
 summary(m)
@@ -92,19 +95,21 @@ p_pr
 
 ## Calculate the probabilities of neighborhoods being in each class
 denom <- sum(sapply(c(m$best[1:(m$ng-1)], 0), exp))
-pi_ic <- sapply(c(m$best[1:(m$ng-1)], 0), function(x) exp(x)/denom)
+pi_ic <- sapply(c(m$best[1:(m$ng-1)], 0), function(x) round(exp(x)/denom, 3))
 names(pi_ic) <- paste0("pi_i(c=", 1:m$ng, ")")
 pi_ic
 
 ## Add information about the probabilities of class membership to data
-d_res<- dcpop %>%
-    left_join(mutate(m$pprob, across(where(is.numeric), round, 4), by="i")) %>%
-    mutate(
-        class = factor(as.character(class))
-    )
+## View sample of predicted class membership probabilities
+pprob <- as_tibble(m$pprob) %>%
+    mutate(across(starts_with("prob"), num, digits = 4))
+sample_n(pprob, 20)
 
 ## Plot observed neighborhood trajectory classified by most probable class 
 ## membership
+d_res<- dcpop %>%
+    left_join(pprob, by="i") %>%
+    mutate(class = factor(as.character(class))) 
 p_cls <- p_base + 
     geom_line(data=d_res, aes(color=class), size=0.1) +
     geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
@@ -115,11 +120,11 @@ p_cls
 
 ## Find neighborhoods with some probability of classification across 
 ## multiple classes
-d_mult <- filter(d_res, across(starts_with("prob"), ~ .x<0.99))
+d_mult <- filter(d_res, across(starts_with("prob"), ~ .x<0.95))
 p_mult <- p_base +
     geom_line(data=d_mult, aes(color=class), size=0.5, linetype=2) +
     geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
     labs(
-        subtitle="Dashed lines represent neighborhoods with <99% probability of most likely class membership"
+        subtitle="Dashed lines represent neighborhoods with <95% probability of most likely class membership"
     )
 p_mult

@@ -58,9 +58,9 @@
 
 \raggedright\textbf{Growth Mixture Model}&
     $y_{ti|c=k} =$&
-    $\gamma_{0k} + \gamma_{1k}(\text{time})_{ti}$ &+&
-    $\rho_{0i}  + \rho_{1i}(\text{time})_{t} + \epsilon_{ti}, \pi_{i(c=k)}$ & 
-    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{\rho} \sim \text{MVN}\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\\ \pi_{i(c=k)} \sim \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}\end{array}$ &
+    $\gamma_{00k} + \gamma_{10k}(\text{time})_{ti}$ &+&
+    $\rho_{0ik}  + \rho_{1ik}(\text{time})_{t} + \epsilon_{ti}, \pi_{i(c=k)}$ & 
+    $\begin{array}{l}\epsilon_{ti} \sim N(0, \sigma^2) \\ \mathbf{T} \sim \text{MVN}\left(0, \begin{bmatrix}\tau_{00} & \\ \tau_{10} & \tau_{11}\end{bmatrix}\right)\\ \pi_{i(c=k)} \sim \frac{\exp\{\eta_{ci}\}}{\sum^K_{k=1}\exp\{\eta_{ik}\}}\end{array}$ &
     \multicolumn{1}{l}{\parbox[c]{1.75in}{\raggedright$\{\sigma\}$ and \\ \{$\gamma_{0k}$, $\gamma_{1k}$, $\tau_{00}$, $\tau_{11}$, $\tau_{01}$, $\pi_{i(c=k)}$\} for each $k$}}\\\bottomrule
 
 

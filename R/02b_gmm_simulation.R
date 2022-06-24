@@ -5,6 +5,7 @@
 ## Author: Michael Bader
 
 source("_functions.R")
+set.seed(925128)
 library(tidyverse)
 library(MASS)
 library(lme4)
@@ -13,27 +14,32 @@ library(lcmm)
 
 theme_set(theme_minimal())
 
-## CONJURE THE POPULATION
 ## There are three groups of tracts:
 ## 100 tracts that start off 90% white and stay 90% white after three decades
 ##  50 tracts that start off 10% white and stay 10% white after three decades
 ##  25 tracts that start off 90% white and end up 10% white after three decades
+## Random variation around intercept with standard deviation of 2.25% and around
+## the slope of 1% and a correlation between the two of 0.2 among the first
+## class of tracts. The variance-covariance matrix for the second class is
+## scaled by 0.8 and by 2.0 for the third class
+
+## CONJURE THE POPULATION
 ## Time is measured by decades
 N_t <- 3
 t <- 0:2
-sigma = 0.1
+sigma = 2
 
 N_wht <- 100       ## Number of tracts simulated to follow this trajectory
 gamma00_wht <- 90  ## Intercept
 gamma10_wht <- 0   ## Slope
-tau00_wht <- 2^2   ## Variance around intercept
-tau11_wht <- 0.5^2 ## Variance around slope
-tau10_wht <- .2 * sqrt(tau00_wht*tau11_wht) ## Covariance of rhos
+tau00_wht <- 2.25^2   ## Variance around intercept
+tau11_wht <- 1^2 ## Variance around slope
+tau10_wht <- .2 / sqrt(tau00_wht*tau11_wht) ## Covariance of rhos
 Tau_wht <- matrix(c(tau00_wht, tau10_wht, tau10_wht, tau11_wht), nrow=2)
 Rho_wht <- MASS::mvrnorm(N_wht, c(0, 0), Tau_wht)
 wht <- rep(gamma00_wht + Rho_wht[,1], each = N_t) +                 # intercepts
-       rep(gamma10_wht + Rho_wht[,2], each = N_t) * rep(t, N_wht) + # slopes
-       rnorm(N_wht * N_t, 0, sigma)
+    rep(gamma10_wht + Rho_wht[,2], each = N_t) * rep(t, N_wht) + # slopes
+    rnorm(N_wht * N_t, 0, sigma)
 
 N_blk <- 50
 gamma00_blk <-  10
@@ -41,11 +47,11 @@ gamma10_blk <-   0
 tau00_blk <- 2^2
 tau11_blk <- 1^2 
 tau10_blk <- -.2 * sqrt(tau00_blk * tau11_blk)
-Tau_blk <- matrix(c(tau00_blk, tau10_blk, tau10_blk, tau11_blk), nrow=2)
+Tau_blk <- Tau_wht * 0.8
 Rho_blk <- MASS::mvrnorm(N_blk, c(0,0), Tau_blk)
 blk <- rep(gamma00_blk + Rho_blk[,1], each = N_t) +                 # intercepts
-       rep(gamma10_blk + Rho_blk[,2], each = N_t) * rep(t, N_blk) + # slopes
-       rnorm(N_blk * N_t, 0, sigma)
+    rep(gamma10_blk + Rho_blk[,2], each = N_t) * rep(t, N_blk) + # slopes
+    rnorm(N_blk * N_t, 0, sigma)
 
 N_chg <- 25
 gamma00_chg <-  90
@@ -53,11 +59,11 @@ gamma10_chg <- -40
 tau00_chg <- 1.25^2
 tau11_chg <- 3^2
 tau10_chg <- -.2 * sqrt(tau00_chg * tau11_chg)
-Tau_chg <- matrix(c(tau00_chg, tau10_chg, tau10_chg, tau11_chg), nrow=2)
+Tau_chg <- Tau_wht * 2
 Rho_chg <- MASS::mvrnorm(N_chg, c(0, 0), Tau_chg)
 chg <- rep(gamma00_chg + Rho_chg[,1], each = N_t) +                 # intercepts
-       rep(gamma10_chg + Rho_chg[,2], each = N_t) * rep(t, N_chg) + # slopes
-       rnorm(N_chg * N_t, 0, sigma)
+    rep(gamma10_chg + Rho_chg[,2], each = N_t) * rep(t, N_chg) + # slopes
+    rnorm(N_chg * N_t, 0, sigma)
 
 N <- sum(N_wht, N_blk, N_chg)
 d_sim <- tibble(
@@ -87,21 +93,31 @@ m1 <- hlme(pwht ~ t, subject = 'i', random = ~t, data = d_sim, ng = 1)
 
 # Model two classes (note the mixture parameter is the same as the random 
 # component when we estimated our model using `lmer`)
-m2 <- hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 2, 
-           mixture = ~1 + t, random = ~1 + t, B=random(m1))
+m2 <- gridsearch(
+    rep = 100, maxiter = 10, minit = m1,
+    hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 2, 
+         mixture = ~1 + t, random = ~1 + t, nwg = TRUE)
+)
 # Compare the model fit
 summarytable(m1, m2,
              which = c("G", "loglik", "conv", "AIC", "BIC", "entropy", "%class"))
 
 # Model three classes and compare the model fit
-m3 <- hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 3, 
-           mixture = ~1 + t, random = ~1 + t, B=random(m1))
+m3 <- gridsearch(
+    rep = 100, maxiter = 30, minit = m1,
+    hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 3,
+         mixture = ~t, random = ~1 + t, nwg = TRUE)
+)
+summary(m3)
 summarytable(m1, m2, m3,
              which = c("G", "loglik", "conv", "AIC", "BIC", "entropy", "%class"))
 
 # Model four classes and compare the model fit
-m4 <- hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 4, 
-           mixture = ~1 + t, random = ~1 + t, B=random(m1))
+m4 <- gridsearch(
+    rep = 100, maxiter = 30, minit = m1,
+    hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 4, 
+         mixture = ~1 + t, random = ~1 + t, nwg = TRUE)
+)
 summarytable(m1, m2, m3, m4,
              which = c("G", "loglik", "conv", "AIC", "BIC", "entropy", "%class"))
 
@@ -116,7 +132,7 @@ pr <- as_tibble(m3p$pred) %>%
 
 p + geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
     labs(
-        title = "Estimated trajectories for classes of LGCA",
+        title = "Estimated trajectories for classes of GMM",
         subtitle = "175 simulated tracts"
     )
 

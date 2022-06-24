@@ -22,8 +22,8 @@ gamma_00 <- log(117)
 gamma_10 <- 0.005
 sigma_ti <- 0.002
 tau_00   <- 0.02^2    ## Note that t_00, tau_11, and t_01 represent
-tau_11   <- 0.001^2  ## *variances/covariances* not standard deviations
-corr_01  <- 0.4        ## *Correlation* between rho0i and rho1i 
+tau_11   <- 0.001^2   ## *variances/covariances* not standard deviations
+corr_01  <- 0.4       ## *Correlation* between rho0i and rho1i 
 ## Multiply by sd of rho0i and rho1i to get covariance
 tau_01   <- corr_01 * sqrt(tau_00) * sqrt(tau_11)
 Tau   <- matrix(c(tau_00,tau_01,tau_01,tau_11),nrow=2) 
@@ -31,16 +31,15 @@ Tau   <- matrix(c(tau_00,tau_01,tau_01,tau_11),nrow=2)
 ## CONJURE THE POPULATION
 ## Set metropolitan area characteristics
 Rho <- mvrnorm(N,c(0,0),Tau)
-## Compare the draw from multivariate normal distribution to our values
-var(Rho)
-c("t00" = tau_00, "t11" = tau_11, "t01" = tau_01)
 
 ## Assign beta values to each of our simulated metropolitan areas
 beta_0i <- gamma_00 + Rho[,1]
 beta_1i <- gamma_10 + Rho[,2]
 
 ## Create individual change trajectories
-lnvalue_ti <- rep(beta_0i,each=N_t) + rep(beta_1i,each=N_t)*t + rnorm(N*N_t,0,sigma_ti)
+lnvalue_ti <- rep(beta_0i,each=N_t)   +  # Intercept
+              rep(beta_1i,each=N_t)*t +  # Slope 
+              rnorm(N*N_t,0,sigma_ti)    # Time-specific variation
 d.sim <- tibble(i,t,lnvalue_ti)
 print(d.sim, n = 30)
 

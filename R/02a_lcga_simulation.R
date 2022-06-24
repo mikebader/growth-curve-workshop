@@ -11,12 +11,13 @@ library(huxtable)
 library(lcmm)
 theme_set(theme_minimal())
 
-## CONJURE THE POPULATION
 ## There are three groups of tracts:
 ## 100 tracts that start off 90% white and stay 90% white after three decades
 ##  50 tracts that start off 10% white and stay 10% white after three decades
 ##  25 tracts that start off 90% white and end up 10% white after three decades
 ## Time is measured by decades
+
+## CONJURE THE POPULATION
 N_t <- 3
 t <- 0:2
 
@@ -45,7 +46,7 @@ d_sim <- tibble(
 head(d_sim)
 
 p <- ggplot(d_sim, aes(x=t, y=pwht, group=nhd_i)) + 
-    geom_line(size=.1) +
+    geom_line(size=.1, color = "#aaaaaa") +
     scale_y_continuous(limits=c(0,100)) +
     labs(
         title = "175 simulated neighborhoods",
@@ -54,8 +55,10 @@ p <- ggplot(d_sim, aes(x=t, y=pwht, group=nhd_i)) +
     )
 p
 
+## ANALYZE DATA WITH GROWTH TRAJECTORY MODEL
 m0 <- lmer(pwht ~ t + (1 + t | nhd_i), data=d_sim)
-huxreg(m0, coefs=c("Intercept"="(Intercept)", "Decade" = "t"))
+huxreg(m0, coefs=c("Intercept"="(Intercept)", "Decade" = "t"), 
+       statistics = c("N" = "nobs"), stars = NULL)
 
 m0_fe <- lme4::fixef(m0)
 p + geom_abline(
@@ -69,20 +72,27 @@ names(m0_re$nhd_i) <- c("rho0i", "rho1i")
 ggplot(m0_re$nhd_i, aes(x=rho0i)) +
     geom_histogram(bins=100) +
     labs(
-        title = "Distribution of tract-specific intercept errors (rho_0i)",
+        title = expression(
+            paste("Distribution of tract-specific intercept errors ",
+                  rho["0i"])
+        ),
         x = expression(rho['0i'], parse=TRUE)
     )
+
 ## Plot distribution of neighborhood-specific slope errors
 ggplot(m0_re$nhd_i, aes(x=rho1i)) +
     geom_histogram(bins=100) +
     labs(
-        title = "Distribution of tract-specific slope errors (rho_1i)",
+        title = expression(
+            paste("Distribution of tract-specific slope errors ",
+                  rho["1i"])
+        ),
         x = expression(rho['1i'], parse=TRUE)
     )
 
 ## Plot relationship between neighborhood-specific intercept & slope errors
 ggplot(m0_re$nhd, aes(x=rho0i, y=rho1i)) +
-    geom_density_2d() +
+    geom_density_2d(size = .2) +
     geom_point(size=.5) +
     labs(
         title = "Relationship between intercept and slope errors",
@@ -97,8 +107,7 @@ d_sim <- as.data.frame(d_sim) # Data frames rather than tibbles are required for
 # Model a single class
 m1 <- hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 1)
 
-# Model two classes (note the mixture parameter is the same as the random 
-# component when we estimated our model using `lmer`)
+# Model two classes 
 m2 <- hlme(pwht ~ t, subject = 'i', data = d_sim, ng = 2, 
            mixture = ~1 + t, B=random(m1))
 # Compare the model fit
@@ -126,20 +135,15 @@ pr <- as_tibble(m3p$pred) %>%
     mutate(t=as.vector(m3p$times[,1])) %>%
     pivot_longer(cols=starts_with("Ypred"), names_to="class", values_to="pwht")
 
-p + geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
-    labs(
-        title = "Estimated trajectories for classes of LGCA",
-        subtitle = "175 simulated tracts"
-    )
-
 g.pred <- p + 
     geom_line(data=pr, aes(x=t, y=pwht, color=class, group=class), size=1.2) +
     labs(
-        title = "Simulated data following a latent class growth distribution",
+        title = "Predicted values of simulated data",
+        subtitle = "175 tracts following a categorical distribution",
         x = "Time",
         y = "Outcome"
     ) +
-    theme(legend.position = "bottom")
+    theme(legend.position = "top")
 g.pred
 ggsave("../images/sims/lcga.pdf", plot = g.pred, 
        height = 6, width = 9, units = "in")
