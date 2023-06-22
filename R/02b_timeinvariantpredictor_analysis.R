@@ -5,6 +5,7 @@
 ## Author: Michael Bader
 
 source('_functions.R')
+library(huxtable)
 library(tidyverse)
 library(lme4)
 
@@ -44,11 +45,15 @@ quintiles <- group_by(zillow_acs, RegionID) %>% slice(1L) %>%
 d.ana <- d.ana %>% mutate(clnpop5 = cut(clnpop_i, quintiles))
 g.desc <- ggplot(d.ana, aes(x=month,y=lnvalue_ti,group=RegionID, color=clnpop5)) +
     geom_line() +
-    scale_color_brewer(palette="Blues") +
+    # scale_color_brewer(palette="Blues") +
+    scale_color_viridis_d() +
     labs(
         title = "Trend in price per sq. ft. by metropolitan area",
         subtitle = "Colors represent quintiles of population",
         color = "Quintile cutpoints"
+    ) +
+    theme(
+        legend.position = "top"
     )
 g.desc
 
@@ -56,21 +61,38 @@ g.desc
 ## Intercept-only: Influence of (logged) population on intercept only
 m.int <- lmer(lnvalue_ti ~ clnpop_i + month + (1 + month | RegionID), 
               data=d.ana)
+summary(m.int)
+
 ## Slope-only: Influence of (logged) population on slope only
 m.slp <- lmer(lnvalue_ti ~ clnpop_i:month + month + (1 + month | RegionID), 
               data=d.ana)
+summary(m.slp)
+
+## Due to the fact that the model failed to converge, we may want to try a 
+## model without a random slope
+m.slp.ire <- lmer(lnvalue_ti ~ clnpop_i:month + month + (1 | RegionID), 
+              data=d.ana)
+summary(m.slp.ire)
+
 ## Intercept & slope: Influence of (logged) population on both intercept & slope only
 m.ctr <- lmer(lnvalue_ti ~ clnpop_i * month + (1 + month | RegionID), 
               data=d.ana)
-huxtable::huxreg(
+summary(m.ctr)
+
+
+out_hux <- huxtable::huxreg(
     "Intercept-only" = m.int, 
     "Slope-only" = m.slp, 
     "Intercept & slope" = m.ctr,
     number_format = "%.5f",
     stars = NULL,
     statistics = c("N" = "nobs", "LL" = "logLik", "AIC" = "AIC"),
-    coefs=c("(Intercept)", "clnpop_i", "month", "clnpop_i:month")
-)
+    coefs=c(
+        "(Intercept)", "clnpop_i", "month", "clnpop_i:month",
+        "sd__(Intercept)", "sd__month",  "cor__(Intercept).month")
+) %>%
+    set_number_format("%0.3f")
+out_hux[-1 * (1 + grep("__", out_hux[,1][[1]])), ]
 
 ## Plot estimated values of parameters over original data
 g.centered <- g.desc +
